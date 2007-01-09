@@ -1,0 +1,19 @@
+Package: topGO
+Type: Package
+Title: topGO: Enrichment analysis for Gene Ontology
+Version: 0.9.7
+Date: 2006-10-10
+Author: Adrian Alexa, Jörg Rahnenführer
+Maintainer: Adrian Alexa <alexa@mpi-inf.mpg.de>
+Description: topGO package provides tools for testing GO terms while accounting
+             for the topology of the GO graph. Different test statistics and
+	     different methods for eliminating local similarities and dependencies
+             between GO terms can be implemented and applied.
+License: LGPL
+Depends: R (>= 2.4.0), methods, graph, Biobase, GO, annotate, SparseM
+Imports: methods, graph, Biobase, SparseM, annotate
+Suggests: ALL, hgu95av2, genefilter, xtable, multtest, Rgraphviz, hgu133a
+biocViews: Microarray,Statistics,Visualization
+Collate: AllClasses.R topGOmethods.R topGOgraph.R topGOalgo.R
+	 topGOtests.R topGOviz.R topGOfunctions.R zzz.R
+Packaged: Thu Jan  4 16:04:53 2007; hpages

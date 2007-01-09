@@ -1,0 +1,34 @@
+import(Biobase)
+import(methods)
+import(graph)
+import(SparseM)
+
+importClassesFrom(annotate, GOTerms)
+importMethodsFrom(annotate, Term, Ontology)
+
+exportClasses(topGOdata, topGOresult, groupStats,
+              classicCount, classicScore,
+              elimCount, elimScore,
+              weightCount, weightScore)
+
+exportMethods(initialize, description, ontology, allGenes, feasible, graph,
+              geneSelectionFun, "description<-", "ontology<-", "feasible<-", "graph<-",
+              "geneSelectionFun<-", print, show, updateGenes, genes, numGenes,
+              geneScore, sigGenes, numSigGenes, usedGO, attrInTerm, genesInTerm,
+              scoresInTerm, countGenesInTerm, termStat, "updateTerm<-",
+              allMembers, Name, members, testStatistic, "Name<-", "allMembers<-",
+              "members<-", numMembers, numAllMembers, runTest, "sigMembers<-",
+              sigAllMembers, numSigAll, sigMembers, numSigMembers, contTable, allScore,
+              membersScore, "score<-", rankMembers, getSigGroups, genTable,
+              elim, cutOff, "elim<-", "cutOff<-", updateGroup, "Weights<-",
+              Weights, "sigRatio<-", getSigRatio, score, testName, testClass,
+              "score<-", "testName<-", "testClass<-", printGenes, penalise,
+              alternative, testStatPar, printGraph,
+              GOFisherTest, GOKSTest, GOtTest,
+              expressionMatrix, phenotype)
+
+export(GOplot, showSigOfNodes, getPvalues, groupGOTerms,
+       annFUN.hgu, annFUN.gene2GO, annFUN.GO2genes,
+       reverseArch, getGraphRoot, buildGOgraph.topology, inducedGraph, buildLevels,
+       getNoOfLevels, mapGenes2GOgraph, .sigAllMethods, 
+       .getFromNode, .genesInNode, .countsInNode, .writeToNodes)

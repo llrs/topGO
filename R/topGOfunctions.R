@@ -1,0 +1,419 @@
+#################### misc functions ####################
+## 
+##
+##
+##
+##
+########################################################
+
+
+
+## Function that split GOTERM in different ontologies.
+## Every new environment contain only the terms from one
+## of the ontologies 'BP', 'CC', 'MF'
+groupGOTerms <- function(where) {
+
+  if(missing(where))
+    where <- .GlobalEnv
+  where <- as.environment(where)
+  
+  assign("GOBPTerm", GOBPTerm <- new.env(hash = T, parent = emptyenv()), envir = where)
+  assign("GOCCTerm", GOCCTerm <- new.env(hash = T, parent = emptyenv()), envir = where)
+  assign("GOMFTerm", GOMFTerm <- new.env(hash = T, parent = emptyenv()), envir = where)
+  
+  require('annotate') || stop('package annotate is required')
+
+  eapply(GOTERM,
+         function(term) {
+           onto <- Ontology(term)
+           if(!is.na(onto))
+             switch(onto,
+                    BP = assign(GOID(term), term, envir = GOBPTerm),
+                    MF = assign(GOID(term), term, envir = GOMFTerm),
+                    CC = assign(GOID(term), term, envir = GOCCTerm))
+         })
+
+  cat("\ngroupGOTerms: \tGOBPTerm, GOMFTerm, GOCCTerm environments built.\n")
+}
+
+
+annFUN.hgu <- function(whichOnto, feasibleGenes = NULL, affyLib = "hgu133a") {
+
+  require(affyLib, character.only = TRUE) || stop(paste('package', affyLib, 'is required', sep = " "))
+  mapping <- get(paste(affyLib, 'GO2PROBE', sep = ''))
+
+  if(is.null(feasibleGenes))
+    feasibleGenes <- ls(get(paste(affyLib, 'ACCNUM', sep = '')))
+      
+  ontoGO <- get(paste('GO', whichOnto, "Term", sep = ''))
+  goodGO <- intersect(ls(ontoGO), ls(mapping))
+
+  GOtoAffy <- lapply(mget(goodGO, envir = mapping, ifnotfound = NA),
+                     intersect, feasibleGenes)
+  
+  emptyTerms <- sapply(GOtoAffy, length) == 0
+
+  return(GOtoAffy[!emptyTerms])
+}
+
+
+## the annotation function
+annFUN.gene2GO <- function(whichOnto, feasibleGenes = NULL, gene2GO) {
+
+  ## GO terms annotated to the specified ontology 
+  ontoGO <- get(paste("GO", whichOnto, "Term", sep = ""))
+
+  ## Restrict the mappings to the feasibleGenes set  
+  if(!is.null(feasibleGenes))
+    gene2GO <- gene2GO[intersect(names(gene2GO), feasibleGenes)]
+  
+  ## Throw-up the genes which have no annotation
+  if(any(is.na(gene2GO)))
+    gene2GO <- gene2GO[!is.na(gene2GO)]
+  
+  numGO <- sapply(gene2GO, length)
+  gene2GO <- gene2GO[numGO > 0]
+  numGO <- numGO[numGO > 0]
+  
+  ## Get all the GO and keep a one-to-one mapping with the genes
+  allGO = unlist(gene2GO, use.names = FALSE)
+  geneID = rep(names(numGO), numGO)
+
+  ii <- order(allGO)
+  geneID <- geneID[ii]
+  
+  ## Get the multiplicities of each GO
+  tt <- table(allGO)
+  msGOterms <- split(geneID, rep(1:length(tt), tt))
+  names(msGOterms) <- names(tt)
+
+  ## Select only the GO's form the specified ontology
+  goodGO <- intersect(ls(ontoGO), names(tt))
+  return(msGOterms[goodGO])
+}
+
+## another verssion of the annotation  function
+annHASH.gene2GO <- function(whichOnto, feasibleGenes = NULL, gene2GO) {
+
+  ## GO terms annotated to the specified ontology 
+  ontoGO <- get(paste("GO", whichOnto, "Term", sep = ""))
+
+  ## Restrict the mappings to the feasibleGenes set  
+  if(!is.null(feasibleGenes))
+    gene2GO <- gene2GO[intersect(names(gene2GO), feasibleGenes)]
+  
+  ## Throw-up the genes which have no annotation
+  if(any(is.na(gene2GO)))
+    gene2GO <- gene2GO[!is.na(gene2GO)]
+  
+  gene2GO <- gene2GO[sapply(gene2GO, length) > 0]
+
+  ## now we have to form the groups and store the genes that will be mapped
+  msGOterms <- new.env(hash = TRUE, parent = emptyenv())
+  genesID <- new.env(hash = TRUE, parent = emptyenv())
+  
+  for(gn in names(gene2GO)) {
+    Terms <- gene2GO[[gn]]
+
+    ## store the gene ID into the genesID hash tabele
+    assign(gn, FALSE, envir = genesID)
+    hashedTerms <- mget(Terms, envir = msGOterms, mode = 'environment', ifnotfound = list(NA))
+
+    ## for the new terms, form an environment with the gene id (this should be
+    ## the fastest way since we not recopy every time)
+    newTerms.idx <- is.na(hashedTerms)
+    newTerms <- Terms[newTerms.idx]
+
+    if((ln.newTerms <- length(newTerms)) > 0) {
+      lapply(newTerms,
+             function(term) {
+               x <- new.env(hash = TRUE, parent = emptyenv()) 
+               assign(gn, FALSE, envir = x)
+               assign(term, x, envir = msGOterms)
+             })
+    }
+    
+    ## for the old groups we must add the new genes id to the actual environment
+    oldT <- hashedTerms[!newTerms.idx]
+    if(length(oldT) > 0)
+      lapply(oldT, function(termEnv) assign(gn, FALSE, envir = termEnv))
+  }
+
+  goodGO <- intersect(ls(ontoGO), ls(msGOterms))
+  msGOterms <- lapply(mget(goodGO, envir = msGOterms, mode = "environment"), ls)
+
+  return(msGOterms)
+}
+
+
+## the annotation function
+annFUN.GO2genes <- function(whichOnto, feasibleGenes = NULL, GO2genes) {
+
+  ## GO terms annotated to the specified ontology 
+  ontoGO <- get(paste("GO", whichOnto, "Term", sep = ""))
+
+  if(is.null(feasibleGenes))
+    feasibleGenes <- unique(unlist(GO2genes, use.names = FALSE))
+  
+  ## Select only the GO's form the specified ontology
+  goodGO <- intersect(ls(ontoGO), names(GO2genes))
+  GO2genes <- lapply(GO2genes[goodGO], intersect, feasibleGenes)
+
+  return(GO2genes[sapply(GO2genes, length) > 0])
+}
+
+
+
+
+
+## function returning all genes that can be used for analysis 
+feasibleGenes.Affy <- function(affyLib = "hgu133a", whichOnto) {
+
+  mapping <- get(paste(affyLib, 'GO2PROBE', sep = ''))
+  
+  ontoGO <- get(paste('GO', whichOnto, "Term", sep = ''))
+  goodGO <- intersect(ls(ontoGO), ls(mapping))
+
+  return(unique(unlist(mget(goodGO, envir = mapping, ifnotfound = NA))))
+}
+
+
+
+######################################################################
+## function to print all the genes annotated to the specified GOs
+
+if(!isGeneric("printGenes"))
+  setGeneric("printGenes", function(object, whichTerms, file, ...) standardGeneric("printGenes"))
+
+setMethod("printGenes",
+          signature(object = "topGOdata", whichTerms = "character", file = "character"),
+          ## numChar = "integer"),
+          function(object, whichTerms, file, affyLib,
+                   numChar = 100, oneFile = FALSE, pvalCutOff) { 
+
+            term.genes <- genesInTerm(object, whichTerms)
+            all.genes <- character()
+            lapply(term.genes, function(x) all.genes <<- union(x, all.genes))
+
+            LL.lib <- get(paste(affyLib, "ENTREZID", sep = ""))
+            Sym.lib <- get(paste(affyLib, "SYMBOL", sep = ""))
+            GNAME.lib <- get(paste(affyLib, "GENENAME", sep = ""))
+
+            probeMapping <- data.frame(LL.id = as.integer(unlist(mget(all.genes,
+                                         envir = LL.lib, ifnotfound = NA))),
+                                       Symbol.id = unlist(mget(all.genes,
+                                         envir = Sym.lib, ifnotfound = NA)))
+            ret.mat <- NULL
+            for(gt in whichTerms) {
+              affID <- term.genes[[gt]]
+
+              pval <- sort(geneScore(object, affID, use.names = TRUE))
+              if(missing(pvalCutOff))
+                affID <- names(pval)
+              else {
+                pval <- pval[pval <= pvalCutOff]
+                affID <- names(pval)
+              }
+
+              ## if there are no genes, there is nothing to print
+              if(length(affID) == 0) {
+                cat("\n\t No genes over the cutOff for:", gt, "\n")
+                next
+              }
+              
+              genesNames <- sapply(mget(affID, envir = GNAME.lib),
+                                   function(x) return(x[1]))
+              genesNames <- paste(substr(genesNames, 1, numChar),
+                                  ifelse(nchar(genesNames) > numChar, "...", ""), sep = "")
+              
+              infoMat <- cbind("Affy ID" = affID, probeMapping[affID, ], "Gene name" = genesNames,
+                               "raw p-value" = format.pval(pval, dig = 3, eps = 1e-30))
+              
+              infoMat <- cbind(No = 1:nrow(infoMat), infoMat)
+
+              if(!oneFile)
+                write.table(infoMat, quote = TRUE, sep = ",", append = FALSE,
+                            file = paste(paste(file, sub(":", "_", gt), sep = "_"), "csv", sep = "."),
+                            col.names = colnames(infoMat), row.names = FALSE)
+              else
+                ret.mat <- rbind(ret.mat, cbind(GOID = rep(gt, nrow(infoMat)), infoMat))
+            }            
+            if(oneFile)
+              write.table(ret.mat, quote = TRUE, sep = ",", append = FALSE,
+                          file = paste(file, "csv", sep = "."),
+                          col.names = colnames(ret.mat), row.names = FALSE)
+          })
+
+ ######################################################################
+
+.getTermsDefinition <- function(whichTerms, ontology, numChar = 20, multipLines = FALSE) {
+  
+  GOOTerm <- get(paste('GO', ontology, 'Term', sep = ''), mode = 'environment')
+  termsNames <- sapply(mget(whichTerms, envir = GOOTerm, ifnotfound = NA), Term)
+
+  if(!multipLines) 
+    shortNames <- paste(substr(termsNames, 1, numChar),
+                        ifelse(nchar(termsNames) > numChar, '...', ''), sep = '')
+  else
+    shortNames <- sapply(termsNames,
+                         function(x) {
+                           a <- strwrap(x, numChar)
+                           return(paste(a, sep = "", collapse = "\\\n"))
+                         })
+  
+  names(shortNames) <- names(termsNames)
+  return(shortNames)
+}
+
+
+## methodsSig contains a named vector of p-values for each run method
+.sigAllMethods <- function(methodsSig) {
+  names.index <- names(sort(methodsSig[[1]]))
+  return(as.data.frame(lapply(methodsSig, function(x) x[names.index])))
+}
+
+if(!isGeneric("genTable"))
+  setGeneric("genTable", function(object, resList, ...) standardGeneric("genTable"))
+
+setMethod("genTable",
+          signature(object = "topGOdata", resList = "list"),
+          ## orderBy = "ANY", ## integer or character (index/name)
+          ## ranksOf = "ANY", ## which ranks to be computed (integer/character)
+          ## topNodes = "integer",
+          ## numChar = "integer"),
+          function(object, resList, orderBy = 1, ranksOf = 1,
+                   topNodes = 10, numChar = 40, use.levels = FALSE) {
+            
+            l <- .sigAllMethods(resList)
+            index <- order(l[, orderBy])
+            l <- l[index, ]
+            
+            rr <- rank(l[, ranksOf], ties = "first")
+            
+            whichTerms <- rownames(l)[1:topNodes]
+            l <- l[whichTerms, ]
+            rr <- as.integer(rr[1:topNodes])
+
+            shortNames <- .getTermsDefinition(whichTerms, ontology(GOdata), numChar = numChar)
+                                              
+            infoMat <- data.frame('GO ID' = whichTerms, 'Term' = shortNames, stringsAsFactors = FALSE)
+            
+            ## put the levels of the GO
+            if(use.levels) {
+              nodeLevel <- buildLevels(graph(GOdata), leafs2root = TRUE)
+              nodeLevel <- unlist(mget(whichTerms, envir = nodeLevel$nodes2level))
+              infoMat <- data.frame(infoMat, Level = as.integer(nodeLevel))
+            }
+            
+            annoStat <- termStat(GOdata, whichTerms)
+
+            dim(rr) <- c(length(rr), 1)
+            colnames(rr) <- paste(ifelse(is.character(ranksOf), ranksOf, colnames(l)[ranksOf]),
+                                  "Rank", sep = "")
+
+            infoMat <- data.frame(infoMat, annoStat, rr,
+                                  apply(l, 2, format.pval, dig = 2, eps = 1e-30),
+                                  stringsAsFactors = FALSE)
+            
+            ##rownames(infoMat) <- whichTerms
+            rownames(infoMat) <- 1:length(whichTerms)
+            
+            return(infoMat)            
+          })
+
+## if(!isGeneric("genLatexTable"))
+##   setGeneric("genLatexTable", function(object, resList, ...) standardGeneric("genLatexTable"))
+
+## setMethod("genLatexTable",
+##           signature(object = "topGOdata",
+##                     resList = "list",
+##                     orderBy = "ANY", ## integer or character (index/name)
+##                     ranksOf = "ANY", ## which ranks to be computed (integer/character)
+##                     topNodes = "integer",
+##                     numChar = "integer"),
+##           function(object, resList, orderBy, ranksOf, topNodes = 10, no.char = 40) {
+            
+
+## = infoMat, 
+##                         pval.tab = xtable.matrix(infoMat, caption = 'GO terms p-value', label = 'tab:GOinfo')))
+          
+
+
+
+################################################################################
+## function that computes the raw/adjusted p-values based on
+## multtest package
+
+getPvalues <- function(edata, classlabel, test = "t",
+                       alternative = c("greater", "two.sided", "less")[1],
+                       genesID = NULL,
+                       correction = c("none", "Bonferroni", "Holm", "Hochberg",
+                         "SidakSS", "SidakSD", "BH", "BY")[8]) {
+  
+  require('multtest') || stop('package multtest is required')
+
+  ## restrict the dataset
+  if(!is.null(genesID))
+    edata <- edata[intersect(genesID, rownames(edata)), ]
+  genesID <- rownames(edata)
+  
+  t.stats <- mt.teststat(edata, classlabel = classlabel, test = test)
+
+  if (alternative == "less") 
+    p.values <- pt(t.stats, df = length(classlabel) - 2)
+  else if (alternative == "greater") 
+    p.values <- pt(t.stats, df = length(classlabel) - 2, lower = FALSE)
+  else 
+    p.values <- 2 * pt(-abs(t.stats), df = length(classlabel) - 2)
+  
+  if(correction != "none") {
+    p.values <- mt.rawp2adjp(p.values, correction)
+    p.values <- p.values$adjp[order(p.values$index), correction]
+  }
+  names(p.values) <- genesID
+  
+  return(p.values)
+}
+
+################################################################################
+
+## a <= b 
+.sigRatio.ratio <- function(a, b, tolerance = 1e-50) {
+  
+  ## if a and b are almost equal we return 1
+  if(identical(all.equal(a, b, tolerance = tolerance), TRUE))
+    return(2)
+  
+  ## we want to compute b / a, thus we must take care for a = 0
+  if(identical(all.equal(a, 0, tolerance = tolerance), TRUE))
+    return(abs(b / (a + tolerance)))
+  
+  return(abs(b / a))
+}
+
+.sigRatio.log <- function(a, b, tolerance = 1e-50) {
+  
+  ## if a and b are almost equal we return 2
+  if(identical(all.equal(a, b, tolerance = tolerance), TRUE))
+    return(2)
+  
+  ## we want to compute log(a) / log(b), thus we must take care for b = 1
+  if(identical(all.equal(log10(b), 0, tolerance = tolerance), TRUE))
+    return(abs(log10(a) / tolerance))
+  
+  return(abs(log10(a) / log10(b)))
+}
+
+## a <= b 
+.sigRatio.01 <- function(a, b, tolerance = 1e-50) {
+  
+  ## if a and b are almost equal we return 1
+  if(identical(all.equal(a, b, tolerance = tolerance), TRUE))
+    return(2)
+  
+  if(a < b)
+    return(1e50)
+  
+  return(1)
+}
+

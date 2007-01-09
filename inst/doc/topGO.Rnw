@@ -1,0 +1,483 @@
+%
+%\VignetteIndexEntry{topGO}
+%\VignetteDepends{topGO}
+%\VignetteKeywords{topGO, GO, graph}
+%\VignettePackage{topGO}
+
+\documentclass[a4paper, oneside, 10pt]{article}
+
+\usepackage[pdftex]{graphicx}
+\usepackage{calc}
+\usepackage{sectsty}
+\usepackage{caption}
+\renewcommand{\captionfont}{\it\sffamily}
+\renewcommand{\captionlabelfont}{\bf\sffamily}
+\allsectionsfont{\sffamily}
+
+% page style %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[a4paper, left=20mm, right=15mm, top=15mm, bottom=20mm, nohead]{geometry}
+\setlength{\parskip}{1.5ex}
+\setlength{\parindent}{0cm}
+\pagestyle{empty}
+
+
+\usepackage{Sweave}
+\SweaveOpts{prefix.string = tGO}
+
+
+\title{\vspace*{-6ex} Gene set enrichment analysis with {\bf topGO}}
+\author{Adrian Alexa,  J\"org Rahnenf\"uhrer}
+\date{\today \\%
+  \texttt{http://www.mpi-sb.mpg.de/$\sim$alexa}}
+
+\begin{document}
+\maketitle
+
+<<echo = FALSE>>=
+options(width = 70)
+@ 
+
+
+\section{Preprocessing}
+We analyse ALL gene expression data from \cite{Chiaretti04}. The dataset consists of $128$
+microarrays from different patients with ALL. First we load the libraries and the data:
+<<results = hide>>=
+library(topGO)
+library(ALL)
+data(ALL)
+@ 
+
+When the {\tt topGO} package is loaded three new environments {\tt GOBPTerm, GOMFTerm} and {\tt GOMFTerm}
+are created and binded to the package environment. These environments are build based on the {\tt GOTERM} 
+environment from package {\tt GO}. They are used for fast recovering of the information specific to each
+ontology. In order to access all GO groups that belong to a specific ontology, e.g. Biological Process (BP),
+one can type:
+<<>>= 
+BPterms <- ls(GOBPTerm)
+str(BPterms)
+@ 
+
+
+Next we need to load the annotation data. The chip used for the experiment is HGU95aV2 Affymetrix. 
+<<>>=
+affyLib <- annotation(ALL)
+library(package = affyLib, character.only = TRUE)
+@ 
+
+Usually one needs to remove genes with low expression value and genes which might have very small variability
+across the samples. Package {\tt genefilter} provides such tools.
+<<>>=
+library(genefilter)
+f1 <- pOverA(0.25, log2(100))
+f2 <- function(x) (IQR(x) > 0.5)
+ff <- filterfun(f1, f2)
+eset <- ALL[genefilter(ALL, ff), ]
+@ 
+
+
+\section{Creating a {\tt topGOdata} object}
+
+The first step when using the {\tt topGO} package is to create a {\tt topGOdata} object. This object 
+will contain all information necessary for the GO analysis, namely the gene list, the list of interesting 
+genes, the scores of genes (if available) and the part of the GO ontology (the GO graph)
+which needs to be used in the analysis. 
+
+First, we need to define the set of genes that are to be annotated with GO terms. Usually, one starts
+with all genes present on the array. In our case we start with $\Sexpr{length(featureNames(eset))}$ genes,
+genes that were not removed by the filtering.
+
+<<results = hide>>=
+geneNames <- featureNames(eset)
+length(geneNames)
+@ 
+
+In the next step the user needs to define the list of interesting genes or to compute gene scores that
+quantify the significance of the genes. The {\tt topGO} package deals with these two cases
+in a unified way. The only difference is the way the {\tt topGOdata} object is build. 
+
+
+
+\subsection{Predefined list of interesting genes}  
+If the user has some a priori knowledge about a set of interesting genes, he can test the enrichment of
+GO terms with regard to this list of interesting genes. In this scenario, when only a list of interesting
+genes is provided, the user is restricted to the use of tests statistics that use only counts of genes.
+
+To exemplify this we randomly select $100$ genes and consider them as interesting genes.
+
+<<>>=
+myInterestedGenes <- sample(geneNames, 100)
+geneList <- factor(as.integer(geneNames %in% myInterestedGenes))
+names(geneList) <- geneNames
+str(geneList)
+@ 
+
+The object {\tt geneList} is a named factor that indicates which genes are interesting and which not. It
+is straightforward to compute such a named vector in the situation where a user has his own predefined list
+of interesting genes.
+
+Next the {\tt topGOdata} object is build. The user needs to specify the ontology of interest
+(BP, MF or CC) and an annotation function which maps genes/probe IDs to GO terms. The function 
+{\tt annFun.hgu} contained in the package is such an annotation function. As long as the user is using 
+Affymetrix chips, this function does not need to be modified. In other cases the function can be easily
+modified to comply with the user's needs.
+
+<<>>=
+GOdata <- new("topGOdata", ontology = "MF", allGenes = geneList,
+              annot = annFUN.hgu, affyLib = affyLib)
+@ 
+
+The initialisation of the GOdata object can take around one minute, depending on the number of annotated genes
+and on the chosen ontology (in this example we used MF as the ontology of interest). By typing {\tt GOdata},
+the user can see the values of some slots.
+
+<<>>=
+GOdata
+@ 
+
+One important point here is that not all the genes that are provided by {\tt geneList} can be annotated
+to the GO. This can be seen by comparing the number of all available genes (the genes present in
+{\tt geneList}) with the number of feasible genes. It is straight forward to use only the feasible genes
+for the rest of the analysis, since  for other genes no information is available.
+
+The GO graph shows the number of nodes and edges of the specified GO ontology induced by the
+{\tt geneList}. This graph contains only GO terms with at least one annotated feasible gene.
+
+
+\subsection{Using the genes score}  
+In many cases the set of interesting genes can be computed based on a score assigned to all genes, 
+for example based on the $p$-value returned by a study of differential expression. In this case, 
+the {\tt topGOdata} object can store the genes score and the rule specifying the list of interesting genes.
+However, the availability of genes scores allows the user to choose from a larger family of tests statistics
+to be used in the GO analysis.
+
+A typical example is the study of the ALL dataset where we need to discriminate between ALL cells
+delivered from either B-cell or T-cell precursors. There are $95$ B-cell ALL samples and $33$ T-cell
+ALL samples in the dataset. 
+
+<<results = hide>>=
+y <- as.integer(sapply(eset$BT, function(x) return(substr(x, 1, 1) == 'T')))
+str(y)
+@ 
+
+A two-sided $t$-test can by applied using the function {\tt getPvalues}. By default the function
+computes FDR (false discovery rate) adjusted $p$-value in order to account for multiple testing.
+A different type of correction can be specified using the {\tt correction} parameter. The distribution
+of the adjusted $p$-values is shown in Figure~\ref{fig:pValHist}.
+
+<<results = hide>>= 
+geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
+hist(geneList, br = 50)
+@ 
+
+
+
+\setkeys{Gin}{width=.9\linewidth}
+\begin{figure}[!t]
+\centering 
+<<fig = TRUE, width = 8, height = 4, echo = FALSE>>= 
+par(mfrow = c(1, 2))
+hist(geneList, br = 50, xlab = "p-values", main = "")
+hist(geneList[geneList < 0.1], br = 50, xlab = "p-values < 0.1", main ="")
+@ 
+\caption{The distribution of the gene's adjusted $p$-values.}
+\label{fig:pValHist}
+\end{figure}
+
+Next, a function for specifying the list of interesting genes must be defined. This function needs
+to select genes based on their scores (in our case the adjusted $p$-values) and must return
+a logical vector specifying which gene is selected and which not.
+Also, this function must have one parameter, named {\tt allScore} and must not depend on the
+names attribute of this parameter. For example, if we consider as interesting genes all genes with an
+adjusted $p$-value lower than $0.01$, the function will look as follows:
+
+<<results = hide>>=
+topDiffGenes <- function(allScore) {
+  return(allScore < 0.01)
+}
+x <- topDiffGenes(geneList)
+sum(x) ## the number of selected genes
+@ 
+
+With all these steps done, the user can now build the {\tt topGOdata} object
+
+<<>>=
+GOdata <- new("topGOdata", ontology = "BP", allGenes = geneList, geneSel = topDiffGenes,
+              description = "GO analysis of ALL data based on diff. expression.", 
+              annot = annFUN.hgu, affyLib = affyLib)
+@ 
+
+Note that the only difference to the case in which we start with a predefined list of interesting genes
+is the use of the {\tt geneSel} parameter. All further analysis depends only on this {\tt GOdata} object.
+
+
+
+\section{Working with the {\tt topGOdata} object}
+
+Once the {\tt topGOdata} object is created the user can use various methods defined for this class to
+access the information encapsulated in the object.
+
+The {\tt description} slot contains information about the experiment. This information can be accessed or
+replaced using the method with the same name. 
+<<results = hide>>=
+description(GOdata)
+description(GOdata) <- paste(description(GOdata), "Object modified on:", format(Sys.time(), "%d %b %Y"), sep = " ")
+description(GOdata)
+@ 
+
+Methods to obtain the list of genes that will be used in the further analysis or methods for obtaining all 
+gene scores are exemplified below.
+
+<<results = hide>>=
+a <- genes(GOdata) ## obtain the list of genes
+str(a)
+numGenes(GOdata)
+@ 
+
+Next we describe how to retrieve the score of a specified set of genes, e.g. a set of randomly selected genes.
+If the object was constructed using a list of interesting genes, then the factor vector that was provided at
+the building of the object will be returned.
+
+<<results = hide>>=
+selGenes <- sample(a, 10)
+gs <- geneScore(GOdata, whichGenes = selGenes) 
+print(gs)
+@
+
+If the user wants an unnamed vector or the score of all genes:
+<<results = hide>>=
+gs <- geneScore(GOdata, whichGenes = selGenes, use.names = FALSE)
+print(gs)
+
+gs <- geneScore(GOdata, use.names = FALSE)
+str(gs)
+@ 
+
+The list of significant genes can be accessed using the method {\tt sigGenes()}.
+<<results = hide>>= 
+sg <- sigGenes(GOdata)
+str(sg)
+numSigGenes(GOdata)
+@ 
+
+Another useful method is {\tt updateGenes} which allows the user to update/change the list of genes (and
+their scores) from a {\tt topGOdata} object. If one wants to update the list of genes by including only the
+feasible ones, one can type:
+
+<<results = hide>>=
+.geneList <- geneScore(GOdata, use.names = TRUE)
+GOdata ## more available genes
+GOdata <- updateGenes(GOdata, .geneList, topDiffGenes)
+GOdata ## the available genes are now the feasible genes
+@ 
+
+There are also methods available for accessing information related to GO and its structure. First, we want to
+know which GO terms are available for analysis and to obtain all the genes annotated to a subset of
+these GO terms.
+
+<<>>=
+graph(GOdata) ## returns the GO graph
+
+ug <- usedGO(GOdata)
+str(ug) 
+@
+
+Next, we select some random GO terms, count the number of annotated genes and obtain their annotation.
+
+<<results = hide>>=
+sel.terms <- sample(usedGO(GOdata), 10)
+
+num.ann.genes <- countGenesInTerm(GOdata, sel.terms) ## the number of annotated genes
+num.ann.genes
+
+ann.genes <- genesInTerm(GOdata, sel.terms) ## get the annotations
+str(ann.genes)
+@
+
+When the {\tt sel.terms} parameter is missing all GO terms are used. The scores for all genes, possibly 
+annotated with names of the genes, can be obtained using the method {\tt scoresInTerm()}.
+<<results = hide>>=
+ann.score <- scoresInTerm(GOdata, sel.terms)
+str(ann.score)
+ann.score <- scoresInTerm(GOdata, sel.terms, use.names = TRUE)
+str(ann.score)
+@ 
+
+Finally, some statistics for a set of GO terms are returned by the method {\tt termStat}. As mentioned
+previously, if the {\tt sel.terms} parameter is missing then the statistics for all available GO terms
+are returned.
+<<>>=
+termStat(GOdata, sel.terms)
+@ 
+
+
+
+\section{The GO analysis}
+
+We are now ready to start the GO analysis. The main function is {\tt getSigGroups()} which takes two 
+parameters. The first parameter is of class {\tt topGOdata} and the second parameter is of class
+{\tt groupStats}.  The {\tt topGO} package is designed to work with different test statistics and
+with multiple GO graph algorithms, see~\cite{Alexa}. 
+
+There are three algorithms implemented in the package: {\sf classic}, {\sf elim} and {\sf weight}.
+Also there are two types of test statistics which can be used, test statistics based on gene
+counts (like Fisher's exact test) and test statistics based on the genes scores
+(like Kolmogorov-Smirnov test). To distinguish between all the algorithms and to secure that all test
+statistics are only used with the appropriate algorithms, two classes are defined for each algorithm.
+
+To better understand this principle consider the following example. Assume we decided to apply the
+{\sf classic} algorithm. The two classes defined for this algorithm are {\tt classicCount} and
+{\tt classicScore}. If an object of this class is given as a parameter to {\tt getSigGroups()} than 
+the classic algorithm will be used. The {\tt getSigGroups()} function can take a while, depending on the
+size of the graph (the ontology used), so be patient. 
+ 
+<<>>=
+test.stat <- new("classicCount", testStatistic = GOFisherTest, name = "Fisher test")
+resultFis <- getSigGroups(GOdata, test.stat)
+@ 
+
+According to this mechanism, one first defines a test statistic for the chosen algorithm, in this
+case {\sf classic} and then runs the algorithm (see the second line). The slot {\tt testStatistic}
+contains the test statistic function. In the above example {\tt GOFisherTest} function which implements
+Fisher's exact test and is available in the {\tt topGO} package was used. A user can define his own test
+statistic function and then apply it using the {\sf classic} algorithm. (For example a function which
+computes the $Z$ score can be implemented using as an example the {\tt GOFisherTest} function.)
+ 
+For the Kolmogorov-Smirnov (KS) test we have:
+
+<<>>=
+test.stat <- new("classicScore", testStatistic = GOKSTest, name = "KS tests")
+resultKS <- getSigGroups(GOdata, test.stat)
+@ 
+
+This time we used the class {\tt classicScore}. This is done since the KS test needs scores of all genes and
+in this case the {\it representation} of a group of genes (GO term) is different. 
+
+The mechanism presented above for {\sf classic} also hold for {\sf elim} and {\sf weight} with the only
+remark that for the {\sf weight} algorithm no test based on gene scores is implemented. To run the {\sf elim}
+algorithm with Fisher's exact test one needs to write: 
+
+<<>>=
+test.stat <- new("elimCount", testStatistic = GOFisherTest, name = "Fisher test", cutOff = 0.01)
+resultElim <- getSigGroups(GOdata, test.stat)
+@ 
+
+Similarly, for the {\sf weight} algorithm one types:
+
+<<>>=
+test.stat <- new("weightCount", testStatistic = GOFisherTest, name = "Fisher test", sigRatio = "ratio")
+resultWeight <- getSigGroups(GOdata, test.stat)
+@ 
+
+%Please note that there are extra parameters for {\sf elim} and {\sf weight}, but we won't discuss them at this point. 
+Next we look at the results of the analysis. First we need to put all resulting $p$-values into a list.
+Then we can use the {\tt genTable} function to generate a table with the results.
+
+<<>>=
+l <- list(classic = score(resultFis),
+          KS = score(resultKS),
+          elim = score(resultElim),
+          weight = score(resultWeight))
+
+allRes <- genTable(GOdata, l, orderBy = "weight", ranksOf = "classic", top = 20)
+@ 
+
+
+{\tt allRes} is a data.frame containing the top $20$ GO terms identified by the {\sf weight} algorithm
+(see {\tt orderBy} parameter). This parameter allows the user decide which $p$-values should be used for
+ordering the GO terms. The table includes some statistics on the GO terms plus the $p$-values obtained 
+from the other algorithms/test statistics. Table~\ref{tab:GOresults} shows the results.
+
+<<echo = FALSE>>=
+library(xtable)
+@ 
+
+\begin{table}[!t]
+  \centering\resizebox{.99\linewidth}{!}{%
+<<echo = FALSE, results = tex>>=
+print.xtable(xtable(apply(allRes, 2, as.character)), floating = FALSE)
+@
+}\caption{Significance of GO terms according to different tests.}
+\label{tab:GOresults}
+\end{table}
+
+
+We can take a look at the $p$-values computed by each algorithm, see Figure~\ref{fig:pValAlg}:
+<<results = hide>>=
+par(mfrow = c(2, 2))
+for(nn in names(l)) {
+  p.val <- l[[nn]]
+  hist(p.val[p.val < 1], br = 50, xlab = "p values",
+       main = paste("Histogram for method:", nn, sep = " "))
+}
+@ 
+
+\setkeys{Gin}{width=.9\linewidth}
+\begin{figure}[!t]
+\centering 
+<<fig = TRUE, echo = FALSE>>= 
+par(mfrow = c(2, 2))
+for(nn in names(l)) {
+  p.val <- l[[nn]]
+  hist(p.val[p.val < 1], br = 50, xlab = "p values",
+       main = paste("Histogram for method:", nn, sep = " "))
+}
+@ 
+\caption{The distribution of the $p$-values returned by each method.}
+\label{fig:pValAlg}
+\end{figure}
+
+Another insightful way of looking at the results of the analysis is to investigate how the significant GO
+terms are distributed over the GO graph. For each algorithm the subgraph induced by the most significant GO
+terms is plotted. In the plots, the {\em significant nodes} are represented as boxes. The plotted graph is
+the upper induced graph generated by these {\em significant nodes}. 
+
+<<results = hide>>=
+showSigOfNodes(GOdata, score(resultFis), firstTerms = 5, useInfo = 'all')
+showSigOfNodes(GOdata, score(resultWeight), firstTerms = 5, useInfo = 'def')
+@ 
+
+<<results = hide, echo = FALSE>>=
+printGraph(GOdata, resultFis, firstSigNodes = 5, fn.prefix = "tGO", useInfo = "all", pdfSW = TRUE)
+printGraph(GOdata, resultWeight, firstSigNodes = 5, fn.prefix = "tGO", useInfo = "def", pdfSW = TRUE)
+@ 
+
+\begin{figure}[!t]
+\centering 
+\includegraphics[width=1.05\linewidth]{tGO_classicCount_5_all}
+\caption{The subgraph induced by the top 5 GO terms identified by the {\sf classic} algorithm for
+  scoring GO terms for enrichment. Boxes indicate the 5 most significant terms. Box color represents the
+  relative significance, ranging from dark red (most significant) to light yellow (least significant).
+  Black arrows indicate {\it is-a} relationships and red arrows {\it part-of} relationships.}
+\label{fig:GOclassic}
+\end{figure}
+
+
+\begin{figure}[!t]
+\label{fig:GOweight}\centering 
+\includegraphics[width=1.05\linewidth]{tGO_weightCount_5_def}
+\caption{The subgraph induced by the top 5 GO terms identified by the {\sf weight} algorithm for
+  scoring GO terms for enrichment. Boxes indicate the 5 most significant terms. Box color represents the
+  relative significance, ranging from dark red (most significant) to light yellow (least significant).
+  Black arrows indicate {\it is-a} relationships and red arrows {\it part-of} relationships.}
+\end{figure}
+
+If we want to print the graphs to .pdf or .ps file, then we can use the following command:
+
+<<>>=
+printGraph(GOdata, resultWeight, firstSigNodes = 5, fn.prefix = "tGO", pdfSW = TRUE)
+@ 
+
+To emphasise differences between two methods, one can type:
+<<>>=
+printGraph(GOdata, resultWeight, firstSigNodes = 10, resultFis, fn.prefix = "tGO", useInfo = "def")
+printGraph(GOdata, resultElim, firstSigNodes = 15, resultFis, fn.prefix = "tGO", useInfo = "all")
+@ 
+
+\clearpage 
+
+
+\bibliography{ref_books}
+\bibliographystyle{apalike}
+
+
+\end{document}
