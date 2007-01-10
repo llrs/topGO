@@ -16,4 +16,3 @@ Suggests: ALL, hgu95av2, genefilter, xtable, multtest, Rgraphviz, hgu133a
 biocViews: Microarray,Statistics,Visualization
 Collate: AllClasses.R topGOmethods.R topGOgraph.R topGOalgo.R
 	 topGOtests.R topGOviz.R topGOfunctions.R zzz.R
-Packaged: Thu Jan  4 16:04:53 2007; hpages
