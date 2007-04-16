@@ -1,3 +1,14 @@
+######################## BUG ########################
+## this seems a bug in the subGraph() .... need to be corected 
+mySubGraph <- function(snodes, graph) {
+  retGraph <- subGraph(snodes, graph)
+  retGraph@nodeData@defaults <- graph@nodeData@defaults
+  
+  return(retGraph)
+}
+
+
+
 ############################   reverseArch   ############################
 ## Simple function to invert the direction of edges in an directed graph.
 ## The returned graph is of class graphNEL.
@@ -193,7 +204,7 @@ inducedGraph <- function(dag,
   ## we start from the specified nodes
   lapply(startNodes, buildInducedGraph)
 
-  return(subGraph(ls(nodeLookUp), dag))
+  return(mySubGraph(ls(nodeLookUp), dag))
 }
 
 
@@ -380,7 +391,7 @@ mapGenes2GOgraph <- function(dag,
   }
 
   retValue <- sapply(nodeData(g, nNames, attr = "genes"), length)
-
+  
   return(retValue[nNames])
 }
 
@@ -392,3 +403,6 @@ mapGenes2GOgraph <- function(dag,
   
   return(g)
 }
+
+
+

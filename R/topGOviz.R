@@ -24,13 +24,13 @@ setMethod("printGraph",
             ## .DOT.FILE.NAME <<- paste(out.fileName, 'dot', sep = '.')
                
             if(pdfSW)
-              pdf(file = paste(out.fileName, 'pdf', sep = '.'))
+              pdf(file = paste(out.fileName, 'pdf', sep = '.'), width = 10, height = 10)
             else
               postscript(file = paste(out.fileName, 'ps', sep = '.'))
             
             ## plot the graph to the specified device
             par(mai = rep(0, 4))
-            gT <- showSigOfNodes(GOdata, score(result), firstTerms = firstSigNodes,
+            gT <- showSigOfNodes(object, score(result), firstTerms = firstSigNodes,
                                  swPlot = FALSE, useInfo = useInfo, plotFunction = GOplot)
             plot(gT$complete.dag)
             dev.off()
@@ -53,14 +53,14 @@ setMethod("printGraph",
             ## .DOT.FILE.NAME <<- paste(out.fileName, 'dot', sep = '.')
                
             if(pdfSW)
-              pdf(file = paste(out.fileName, 'pdf', sep = '.'))
+              pdf(file = paste(out.fileName, 'pdf', sep = '.'), width = 10, height = 10)
             else
               postscript(file = paste(out.fileName, 'ps', sep = '.'))
             
             ## plot the graph to the specified device
             par(mai = rep(0, 4))
             wN <- names(sort(score(refResult))[1:firstSigNodes])
-            gT <- showSigOfNodes(GOdata, score(result), firstTerms = firstSigNodes,
+            gT <- showSigOfNodes(object, score(result), firstTerms = firstSigNodes,
                                  wantedNodes = wN, swPlot = FALSE, useInfo = useInfo,
                                  oldSigNodes = score(refResult), plotFunction = GOplot)
             plot(gT$complete.dag)

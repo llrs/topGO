@@ -5,12 +5,13 @@
 \alias{printGenes-methods}
 \alias{printGenes}
 \alias{printGenes,topGOdata,character,character-method}
+\alias{printGenes,topGOdata,character,missing-method}
 
-
-\title{ ~~ Methods for Function printGenes in Package `topGO' ~~}
+\title{Summary for genes annotated to a GO term}
 
 \description{
- ~~ Methods for function \code{printGenes} in Package `topGO' ~~
+  Function to print summary for the top genes annotated to the specified
+  GO term.
 }
 
 

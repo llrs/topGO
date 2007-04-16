@@ -479,7 +479,7 @@ setMethod("show", "topGOdata", function(object) .printTopGOdata(x = object))
   cat("   - symbol: ", sym, " ...\n")
   if(is.numeric(x@allScores)) {
     score <- x@allScores[1:min(length(x@allGenes), 5)]
-    score <- apply(cbind(score, nchar(sym)), 1, function(x) format(x[1], digits = x[2] - 2))
+    score <- apply(cbind(score, nchar(sym)), 1, function(x) format(x[1], digits = max(x[2] - 2, 1)))
     cat("   - score : ", score, " ...\n")
   }
   cat("   -", sum(x@geneSelectionFun(x@allScores)), " significant genes. \n")
@@ -490,7 +490,7 @@ setMethod("show", "topGOdata", function(object) .printTopGOdata(x = object))
   cat("   - symbol: ", sym, " ...\n")
   if(is.numeric(x@allScores)) {
     score <- geneScore(x)[1:min(numGenes(x), 5)]
-    score <- apply(cbind(score, nchar(sym)), 1, function(x) format(x[1], digits = x[2] - 2))
+    score <- apply(cbind(score, nchar(sym)), 1, function(x) format(x[1], digits = max(x[2] - 2, 1)))
     cat("   - score : ", score, " ...\n")
   }
   cat("   -", numSigGenes(x), " significant genes. \n")

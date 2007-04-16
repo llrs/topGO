@@ -185,12 +185,13 @@ feasibleGenes.Affy <- function(affyLib = "hgu133a", whichOnto) {
 if(!isGeneric("printGenes"))
   setGeneric("printGenes", function(object, whichTerms, file, ...) standardGeneric("printGenes"))
 
+## if the file argument is missing the function will just return
+## a list of data.frames, each data.frame containg the gene information for specified GO term
 setMethod("printGenes",
-          signature(object = "topGOdata", whichTerms = "character", file = "character"),
-          ## numChar = "integer"),
-          function(object, whichTerms, file, affyLib,
-                   numChar = 100, oneFile = FALSE, pvalCutOff) { 
-
+          signature(object = "topGOdata", whichTerms = "character", file = "missing"),
+          function(object, whichTerms, affyLib, numChar = 100, simplify = TRUE,
+                   geneCufOff = 50, pvalCutOff) { 
+            
             term.genes <- genesInTerm(object, whichTerms)
             all.genes <- character()
             lapply(term.genes, function(x) all.genes <<- union(x, all.genes))
@@ -203,7 +204,10 @@ setMethod("printGenes",
                                          envir = LL.lib, ifnotfound = NA))),
                                        Symbol.id = unlist(mget(all.genes,
                                          envir = Sym.lib, ifnotfound = NA)))
-            ret.mat <- NULL
+
+            retList <- vector("list", length(whichTerms))
+            names(retList) <- whichTerms
+            
             for(gt in whichTerms) {
               affID <- term.genes[[gt]]
 
@@ -215,6 +219,9 @@ setMethod("printGenes",
                 affID <- names(pval)
               }
 
+              ## we restrict the output to the number of genes
+              length(affID) <- min(length(affID), geneCufOff)
+              
               ## if there are no genes, there is nothing to print
               if(length(affID) == 0) {
                 cat("\n\t No genes over the cutOff for:", gt, "\n")
@@ -226,22 +233,48 @@ setMethod("printGenes",
               genesNames <- paste(substr(genesNames, 1, numChar),
                                   ifelse(nchar(genesNames) > numChar, "...", ""), sep = "")
               
-              infoMat <- cbind("Affy ID" = affID, probeMapping[affID, ], "Gene name" = genesNames,
-                               "raw p-value" = format.pval(pval, dig = 3, eps = 1e-30))
-              
-              infoMat <- cbind(No = 1:nrow(infoMat), infoMat)
-
-              if(!oneFile)
-                write.table(infoMat, quote = TRUE, sep = ",", append = FALSE,
-                            file = paste(paste(file, sub(":", "_", gt), sep = "_"), "csv", sep = "."),
-                            col.names = colnames(infoMat), row.names = FALSE)
-              else
-                ret.mat <- rbind(ret.mat, cbind(GOID = rep(gt, nrow(infoMat)), infoMat))
+              retList[[gt]] <- cbind("Affy ID" = affID, probeMapping[affID, ], "Gene name" = genesNames,
+                                     "raw p-value" = format.pval(pval[affID], dig = 3, eps = 1e-30))
             }            
-            if(oneFile)
-              write.table(ret.mat, quote = TRUE, sep = ",", append = FALSE,
-                          file = paste(file, "csv", sep = "."),
-                          col.names = colnames(ret.mat), row.names = FALSE)
+
+            ## if we have only one GO term we return just the data.frame
+            if(simplify && length(whichTerms) == 1)
+              return(retList[[1]])
+
+            return(retList)
+          })
+
+
+setMethod("printGenes",
+          signature(object = "topGOdata", whichTerms = "character", file = "character"),
+          ## numChar = "integer"),
+          function(object, whichTerms, file, oneFile = FALSE, ...) { 
+
+            infoList <- printGenes(object, whichTerms, ...)
+
+            if(length(whichTerms) == 1) {
+              write.table(infoList, quote = TRUE, sep = ",", append = FALSE,
+                          file = paste(paste(file, sub(":", "_", whichTerms), sep = "_"), "csv", sep = "."),
+                          col.names = colnames(infoList), row.names = 1:nrow(infoList))
+              return()
+            }
+            
+            if(oneFile) {
+              fAppend <- FALSE
+              for(gt in whichTerms) {
+                write.table(cbind(GOID = rep(gt, nrow(infoList[[gt]])), infoList[[gt]]),
+                            quote = TRUE, sep = ",", append = fAppend,
+                            file = paste(file, "csv", sep = "."),
+                            col.names = colnames(infoList[[gt]]), row.names = FALSE)
+                fAppend <- TRUE
+                return()
+              }
+            }
+            
+            for(gt in whichTerms) 
+              write.table(infoList[[gt]], quote = TRUE, sep = ",", append = FALSE,
+                          file = paste(paste(file, sub(":", "_", gt), sep = "_"), "csv", sep = "."),
+                          col.names = colnames(infoList[[gt]]), row.names = 1:nrow(infoList[[gt]]))
           })
 
  ######################################################################
@@ -267,10 +300,11 @@ setMethod("printGenes",
 
 
 ## methodsSig contains a named vector of p-values for each run method
-.sigAllMethods <- function(methodsSig) {
+.sigAllMethods <- function (methodsSig)  {
   names.index <- names(sort(methodsSig[[1]]))
-  return(as.data.frame(lapply(methodsSig, function(x) x[names.index])))
+  return(data.frame(lapply(methodsSig, function(x) x[names.index]), check.names = FALSE))
 }
+
 
 if(!isGeneric("genTable"))
   setGeneric("genTable", function(object, resList, ...) standardGeneric("genTable"))
@@ -294,26 +328,25 @@ setMethod("genTable",
             l <- l[whichTerms, ]
             rr <- as.integer(rr[1:topNodes])
 
-            shortNames <- .getTermsDefinition(whichTerms, ontology(GOdata), numChar = numChar)
+            shortNames <- .getTermsDefinition(whichTerms, ontology(object), numChar = numChar)
                                               
             infoMat <- data.frame('GO ID' = whichTerms, 'Term' = shortNames, stringsAsFactors = FALSE)
             
             ## put the levels of the GO
             if(use.levels) {
-              nodeLevel <- buildLevels(graph(GOdata), leafs2root = TRUE)
+              nodeLevel <- buildLevels(graph(object), leafs2root = TRUE)
               nodeLevel <- unlist(mget(whichTerms, envir = nodeLevel$nodes2level))
               infoMat <- data.frame(infoMat, Level = as.integer(nodeLevel))
             }
             
-            annoStat <- termStat(GOdata, whichTerms)
+            annoStat <- termStat(object, whichTerms)
 
             dim(rr) <- c(length(rr), 1)
-            colnames(rr) <- paste(ifelse(is.character(ranksOf), ranksOf, colnames(l)[ranksOf]),
-                                  "Rank", sep = "")
+            colnames(rr) <- paste("Rank in ", ifelse(is.character(ranksOf), ranksOf, colnames(l)[ranksOf]), sep = "")
 
             infoMat <- data.frame(infoMat, annoStat, rr,
                                   apply(l, 2, format.pval, dig = 2, eps = 1e-30),
-                                  stringsAsFactors = FALSE)
+                                  check.names = FALSE, stringsAsFactors = FALSE)
             
             ##rownames(infoMat) <- whichTerms
             rownames(infoMat) <- 1:length(whichTerms)

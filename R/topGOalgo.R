@@ -95,7 +95,7 @@ setMethod("getSigGroups",
             cat(paste("\n\t\t The algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
 
             ## restrict the graph
-            g <- subGraph(.sigTerms, graph(object))
+            g <- mySubGraph(.sigTerms, graph(object))
             ## apply the algorithm
             algoRes <- .sigGroups.elim(g, test.stat)
             
@@ -163,7 +163,7 @@ setMethod("getSigGroups",
             cat(paste("\n\t\t The algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
 
             ## restrict the graph
-            g <- subGraph(.sigTerms, graph(object))
+            g <- mySubGraph(.sigTerms, graph(object))
             ## apply the algorithm
             algoRes <- .sigGroups.weight(g, test.stat)
             
