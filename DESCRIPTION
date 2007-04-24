@@ -1,7 +1,7 @@
 Package: topGO
 Type: Package
 Title: topGO: Enrichment analysis for Gene Ontology
-Version: 1.2.0
+Version: 1.3.0
 Date: 2006-10-10
 Author: Adrian Alexa, Jorg Rahnenfuhrer
 Maintainer: Adrian Alexa <alexa@mpi-inf.mpg.de>
