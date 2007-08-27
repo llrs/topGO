@@ -186,8 +186,8 @@ l <- list(classic = score(resultFis),
 
 a <- genTable(GOdata, l, orderBy = "weight", ranksOf = "classic", top = 50, numChar = 40, use.levels = FALSE)
 ## if you want a latex table
-library(xtable)
-print.xtable(xtable(apply(a, 2, as.character)), floating = FALSE)
+if(require(xtable))
+  print(xtable(apply(a, 2, as.character)), floating = FALSE)
 
 ## to plot a subgraph
 showSigOfNodes(GOdata, score(resultFis), firstTerms = 15, useInfo = 'all')

@@ -354,6 +354,83 @@ setMethod("genTable",
             return(infoMat)            
           })
 
+
+######################################################################
+## try to make genTable to use the topGOresult objects
+if(!isGeneric("GenTable"))
+  setGeneric("GenTable", function(object, ...) standardGeneric("GenTable"))
+
+setMethod("GenTable",
+          signature(object = "topGOdata"),
+          ## ... = list of topGOresult object
+          ## orderBy = "ANY", ## integer or character (index/name)
+          ## ranksOf = "ANY", ## which ranks to be computed (integer/character)
+          ## topNodes = "integer",
+          ## numChar = "integer",
+          ## useLevels = "logical"),
+          function(object, ..., orderBy = 1, ranksOf = 2,
+                   topNodes = 10, numChar = 40, useLevels = FALSE) {
+
+            resList <- list(...)
+
+            ## first for the class of the elements in the list
+            if(!all(sapply(resList, is, "topGOresult")))
+              stop("Use: topGOdata, topGOresult_1, topGOresult_2, ..., \"parameters\".")
+            ## obtain the score from the objects
+            resList <- lapply(resList, score)
+
+            ## order the scores and take care of the case in which only one result is provided
+            ## in such case the orderBy and ranksOf parameters are ignored.
+            if(length(resList) == 1) {
+              orderBy <- ranksOf <- 1
+              l <- data.frame(resList)
+            } else {
+              l <- .sigAllMethods(resList)
+            }
+
+            index <- order(l[, orderBy])
+            l <- l[index, , drop = FALSE]
+            rr <- rank(l[, ranksOf], ties = "first")
+            whichTerms <- rownames(l)[1:topNodes]
+            l <- l[whichTerms, , drop = FALSE]
+            rr <- as.integer(rr[1:topNodes])
+
+            shortNames <- .getTermsDefinition(whichTerms, ontology(object), numChar = numChar)
+            
+            infoMat <- data.frame('GO ID' = whichTerms, 'Term' = shortNames, stringsAsFactors = FALSE)
+            
+            ## put the levels of the GO
+            if(useLevels) {
+              nodeLevel <- buildLevels(graph(object), leafs2root = TRUE)
+              nodeLevel <- unlist(mget(whichTerms, envir = nodeLevel$nodes2level))
+              infoMat <- data.frame(infoMat, Level = as.integer(nodeLevel))
+            }
+            
+            annoStat <- termStat(object, whichTerms)
+
+            ## if orderBy == ranksOf then there is no need to put the ranks
+            if(ranksOf != orderBy) {
+              dim(rr) <- c(length(rr), 1)
+              colnames(rr) <- paste("Rank in ", ifelse(is.character(ranksOf), ranksOf, colnames(l)[ranksOf]), sep = "")
+
+              infoMat <- data.frame(infoMat, annoStat, rr,
+                                    apply(l, 2, format.pval, dig = 2, eps = 1e-30),
+                                    check.names = FALSE, stringsAsFactors = FALSE)
+
+            } else {
+              infoMat <- data.frame(infoMat, annoStat,
+                                    apply(l, 2, format.pval, dig = 2, eps = 1e-30),
+                                    check.names = FALSE, stringsAsFactors = FALSE)
+            }
+            
+            ##rownames(infoMat) <- whichTerms
+            rownames(infoMat) <- 1:length(whichTerms)
+            
+            return(infoMat)            
+          })
+
+
+
 ## if(!isGeneric("genLatexTable"))
 ##   setGeneric("genLatexTable", function(object, resList, ...) standardGeneric("genLatexTable"))
 

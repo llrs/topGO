@@ -16,6 +16,7 @@
 \alias{genes}
 \alias{genesInTerm}
 \alias{genTable}
+\alias{GenTable}
 \alias{graph<-}
 \alias{graph}
 \alias{numGenes}
@@ -58,6 +59,7 @@
 \alias{genesInTerm,topGOdata,character-method}
 \alias{genesInTerm,topGOdata,missing-method}
 \alias{genTable,topGOdata,list-method}
+\alias{GenTable,topGOdata-method}
 \alias{graph<-,topGOdata-method}
 \alias{graph,topGOdata-method}
 \alias{initialize,topGOdata-method}
@@ -125,6 +127,7 @@
     \item{genesInTerm}{\code{signature(object = "topGOdata", whichGO = "character")}: ... }
     \item{genesInTerm}{\code{signature(object = "topGOdata", whichGO = "missing")}: ... }
     \item{genTable}{\code{signature(object = "topGOdata", resList = "list")}: ... }
+    \item{GenTable}{\code{signature(object = "topGOdata", ...)}: ... }
     \item{getSigGroups}{\code{signature(object = "topGOdata", test.stat = "classicCount")}: ... }
     \item{getSigGroups}{\code{signature(object = "topGOdata", test.stat = "classicScore")}: ... }
     \item{graph<-}{\code{signature(object = "topGOdata")}: ... }
