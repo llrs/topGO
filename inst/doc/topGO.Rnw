@@ -1,6 +1,5 @@
-%
 %\VignetteIndexEntry{topGO}
-%\VignetteDepends{topGO}
+%\VignetteDepends{ALL, hgu95av2, genefilter, xtable, multtest, Rgraphviz}
 %\VignetteKeywords{topGO, GO, graph}
 %\VignettePackage{topGO}
 
@@ -388,13 +387,14 @@ ordering the GO terms. The table includes some statistics on the GO terms plus t
 from the other algorithms/test statistics. Table~\ref{tab:GOresults} shows the results.
 
 <<echo = FALSE>>=
-library(xtable)
+
 @ 
 
 \begin{table}[!t]
   \centering\resizebox{.99\linewidth}{!}{%
 <<echo = FALSE, results = tex>>=
-print.xtable(xtable(apply(allRes, 2, as.character)), floating = FALSE)
+if(require(xtable))
+  print(xtable(apply(allRes, 2, as.character)), floating = FALSE)
 @
 }\caption{Significance of GO terms according to different tests.}
 \label{tab:GOresults}
