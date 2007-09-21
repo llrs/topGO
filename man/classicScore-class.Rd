@@ -66,7 +66,6 @@ Class \code{"groupStats"}, directly.
   \code{\link{getSigGroups-methods}}
 }
 
-}
 \examples{
 ## define the type of test you want to use
 test.stat <- new("classicScore", testStatistic = GOKSTest, name = "KS tests")

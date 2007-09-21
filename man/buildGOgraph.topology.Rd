@@ -17,7 +17,7 @@ buildGOgraph.topology(mostSpecificGOs, whichOnto)
 \arguments{
   \item{mostSpecificGOs}{list of GO terms}
   \item{whichOnto}{character string specifying one of the three GO
-    ontologies: \code{"BP"}, \code{"MF"}, \code{"CC"}}}
+    ontologies: \code{"BP"}, \code{"MF"}, \code{"CC"}}
 }
 
 

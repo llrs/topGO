@@ -322,15 +322,6 @@ setMethod("getSigGroups",
     ## run the test (the p-value)
     termSig <- runTest(group.test)
 
-    if(!is.null(.LOG.FILE))
-      cat("\n\n -- GO term: ", termID, " - ", length(Weights(group.test)),
-          "weights with mean: ", mean(Weights(group.test)),
-          "\n\t + Current p-value: ", termSig,
-          "\n\t + Term Children: ", termChildren,
-          file = .LOG.FILE, append = TRUE)
-    
-    ## NOW WE HAVE THE SIGNIFICANCE OF NODE u
-
     ## if we came from some recursive call
     if(length(termChildren) == 0) {
       assign(termID, termSig, envir = sigList)
@@ -352,9 +343,6 @@ setMethod("getSigGroups",
       pW[child] <- penalise(group.test, a = childSig, b = termSig)
     }
     
-    if(!is.null(.LOG.FILE))
-      cat("\n\t + Children weights: ", names(w), " - ", w, file = .LOG.FILE, append = TRUE)
-
     ## if w[child] > 1 than that child is more significant
     sig.termChildren <- names(w[w > 1])
     
@@ -380,10 +368,6 @@ setMethod("getSigGroups",
         }
 
         assign(child, gCW, envir = downNodes.LookUP)
-        
-        if(!is.null(.LOG.FILE))
-          cat("\n\t + Updating for child (", termID, "->", child, ")\t( ",
-              length(gene.child), " genes updated ).", file = .LOG.FILE, append = TRUE)
       }
       ## since we have only less significant genes that means
       ## that we don't recompute the significance for node 'u'
@@ -452,9 +436,6 @@ setMethod("getSigGroups",
 
     ## some messages
     cat(paste("\n\t Level ", i, ":\t", length(currNodes.names), " nodes to be scored.\n", sep =""))
-    if(!is.null(.LOG.FILE))
-      cat(paste("\n\n Level ", i, ":\t", length(currNodes.names), " nodes to be scored.\n", sep =""),
-          file = .LOG.FILE, append = TRUE)
 
     for(termID in currNodes.names) {
       ## take the IDs of the gene in the current node
@@ -469,10 +450,6 @@ setMethod("getSigGroups",
         ## get the upper induced subgraph from 'u' (including 'u')
         upSubgraph <- inducedGraph(goDAG, termID)
         ## set the weights for all the nodes
-        if(!is.null(.LOG.FILE))
-          cat("\n\t - Updating weights for ", termID, "\t( ", length(.gene.weights),
-              " genes updated in ", length(nodes(upSubgraph)) - 1,  " GO terms ).",
-              file = .LOG.FILE, append = TRUE)
         
         lapply(setdiff(nodes(upSubgraph), termID), setGeneWeights, .gene.weights, upNodes.LookUP)
       }
@@ -481,10 +458,6 @@ setMethod("getSigGroups",
 
   
   ## recompute the significance of the nodes in the downNodes.LookUP
-  if(!is.null(.LOG.FILE))
-    cat("\n\n -- Updating significance for", length(downNodes.LookUP), "terms.",
-        file = .LOG.FILE, append = TRUE)
-
   for(termID in ls(downNodes.LookUP)) {
     newWeights <- x.comb.y(get(termID, envir = upNodes.LookUP),
                            get(termID, envir = downNodes.LookUP))
@@ -492,13 +465,6 @@ setMethod("getSigGroups",
     termSig <- runTest(updateGroup(test.stat, name = termID,
                                    members = currAnno[[termID]], weights = newWeights))
     
-    if(!is.null(.LOG.FILE))
-      cat("\n\t + Computing weights for ", termID,
-          "\t (old sig:", get(termID, envir = sigList),
-          "-> new sig:", termSig, ").",
-          file = .LOG.FILE, append = TRUE)
-    
-
     assign(termID, termSig, envir = sigList)
   }
   
@@ -575,16 +541,6 @@ setMethod("getSigGroups",
     ## run the test (the p-value)
     termSig <- runTest(group.test)
 
-
-    if(!is.null(.LOG.FILE))
-      cat("\n\n -- GO term: ", termID, " - ", length(Weights(group.test)), "weights with mean: ",
-          mean(Weights(group.test)),
-          "\n\t + Current p-value: ", termSig,
-          "\n\t + Term Children: ", termChildren,
-          file = .LOG.FILE, append = TRUE)
-    
-
-    
     ## NOW WE HAVE THE SIGNIFICANCE OF NODE u
     
     ## if we came from some recursive call
@@ -630,11 +586,6 @@ setMethod("getSigGroups",
                                 members = gene.child,
                                 weights = gene.childWeights)
         assign(child, runTest(child.GT), envir = sigList)
-
-        if(!is.null(.LOG.FILE))
-          cat("\n\t + Updating for child (", termID, "->", child, ")\t( ",
-              length(gene.child), " genes updated ) -> new P-value", runTest(child.GT),  
-              file = .LOG.FILE, append = TRUE)
       }
       ## since we have only less significant genes that means
       ## that we don't recompute the significance for node 'u'
@@ -707,9 +658,6 @@ setMethod("getSigGroups",
 
     ## some messages
     cat(paste("\n\t Level ", i, ":\t", length(currNodes.names), " nodes to be scored.\n", sep =""))
-    if(!is.null(.LOG.FILE))
-      cat(paste("\n\n Level ", i, ":\t", length(currNodes.names), " nodes to be scored.\n", sep =""),
-          file = .LOG.FILE, append = TRUE)
 
     for(termID in currNodes.names) {
       ## take the IDs of the gene in the current node
@@ -724,10 +672,7 @@ setMethod("getSigGroups",
         ## get the upper induced subgraph from 'u' (including 'u')
         upSubgraph <- inducedGraph(goDAG, termID)
         ## set the weights for all the nodes
-        if(!is.null(.LOG.FILE))
-          cat("\n\t - Updating weights for ", termID, "\t( ", length(.gene.weights),
-              " genes updated in ", length(nodes(upSubgraph)) - 1,  " GO terms ).",
-              file = .LOG.FILE, append = TRUE)
+
         lapply(setdiff(nodes(upSubgraph), termID), setGeneWeights, .gene.weights, upNodes.LookUP)
       }
     }

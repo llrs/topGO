@@ -21,7 +21,7 @@ groupGOTerms <- function(where) {
   assign("GOCCTerm", GOCCTerm <- new.env(hash = T, parent = emptyenv()), envir = where)
   assign("GOMFTerm", GOMFTerm <- new.env(hash = T, parent = emptyenv()), envir = where)
   
-  require('annotate') || stop('package annotate is required')
+  require('AnnotationDbi') || stop('package AnnotationDbi is required')
 
   eapply(GOTERM,
          function(term) {

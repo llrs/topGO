@@ -3,8 +3,8 @@ import(methods)
 import(graph)
 import(SparseM)
 
-importClassesFrom(annotate, GOTerms)
-importMethodsFrom(annotate, Term, Ontology)
+importClassesFrom(AnnotationDbi, GOTerms)
+importMethodsFrom(AnnotationDbi, Term, Ontology)
 
 exportClasses(topGOdata, topGOresult, groupStats,
               classicCount, classicScore,

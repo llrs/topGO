@@ -738,12 +738,6 @@ setMethod("contTable", "classicCount",
             contMat <- cbind(sig = sig, notSig = not.sig)
             row.names(contMat) <- c("anno", "notAnno")
 
-            ##if(!is.null(.LOG.FILE)) {
-            ## cat("\n\n (Cont mat)   ", file = .LOG.FILE, append = TRUE)
-            ## write.table(contMat, file = .LOG.FILE, quote = FALSE, sep = "\t",
-            ##            append = TRUE)## col.names = colnames(contMat), row.names = TRUE)
-            ##}
-            
             return(contMat)
           })
 
