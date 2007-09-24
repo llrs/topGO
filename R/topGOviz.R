@@ -253,6 +253,7 @@ GOplot.counts <- function(dag, wantedNodes, dag.name = 'GO terms',
     ## get the DAG root coordinates
     dagRoot <- getGraphRoot(dag, leafs2root = F)
     parentEnv <- environment()
+    rootCenter <- NULL
     lapply(AgNode(curPlot),
            function(x) {
              if(name(x) == dagRoot)
@@ -297,7 +298,7 @@ GOplot.counts <- function(dag, wantedNodes, dag.name = 'GO terms',
     ## if we want to differentiate between 'part-of' and 'is-a' edges
     if(edgeTypes)
       ##    0 for a is_a relation,  1 for a part_of relation
-      edgeAttrs$color <- ifelse(getEdgeWeights(dag) == 0, 'black', 'red')
+      edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'red')
   
   dagLayout <- agopen(graph = dag, name = dag.name, attrs = graphAttrs,
                       nodeAttrs = nodeAttrs,  edgeAttrs = edgeAttrs)
@@ -531,7 +532,7 @@ printDOT <- function(dag, sigNodes = NULL, genNodes = NULL, wantedNodes = NULL,
   else
     ## if we want to differentiate between 'part-of' and 'is-a' edges
     ##    0 for a is_a relation,  1 for a part_of relation
-    edgeAttrs$color <- ifelse(getEdgeWeights(dag) == 0, 'black', 'red')
+    edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'red')
   
 
   toDot(graph = dag, filename = export.to.dot.file,

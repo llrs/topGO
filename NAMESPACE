@@ -23,7 +23,7 @@ exportMethods(initialize, description, ontology, allGenes, feasible, graph,
               elim, cutOff, "elim<-", "cutOff<-", updateGroup, "Weights<-",
               Weights, "sigRatio<-", getSigRatio, score, testName, testClass,
               "score<-", "testName<-", "testClass<-", printGenes, penalise,
-              alternative, testStatPar, printGraph,
+              scoreOrder, testStatPar, printGraph, run,
               GOFisherTest, GOKSTest, GOtTest,
               expressionMatrix, phenotype)
 

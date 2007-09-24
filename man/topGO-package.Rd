@@ -25,13 +25,13 @@
 }
 
 \author{
-  Adrian Alexa, Jörg Rahnenführer
+  Adrian Alexa, J\"org Rahnenf\"uhrer
   
   Maintainer: Adrian Alexa <alexa@mpi-inf.mpg.de>
 }
 
 \references{
-  Alexa A., Rahnenführer J., Lengauer T., Improved scoring of
+  Alexa A., Rahnenf\"uhrer J., Lengauer T., Improved scoring of
   functional groups from gene expression data by decorrelating GO
   graph structure, Bioinformatics 22(13): 1600-1607, 2006
 }

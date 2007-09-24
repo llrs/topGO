@@ -752,16 +752,16 @@ setMethod("initialize", "classicScore",
                    allMembers = character(),
                    groupMembers = character(),
                    score = numeric(),
-                   alternative = "less",
+                   scoreOrder = "increasing",  ## this is the case in which p-values are used
                    ...) {
 
-            .alternative <- switch(alternative,
-                                   greater = TRUE,
-                                   less = FALSE,
-                                   stop("alternative should be greater or less"))
+            scoreOrder <- switch(scoreOrder,
+                                 decreasing = TRUE,
+                                 increasing = FALSE,
+                                 stop("scoreOrder should be increasing or decreasing"))
             
             ## first we order the members aording to the score
-            index <- order(score, decreasing = .alternative)
+            index <- order(score, decreasing = scoreOrder)
             if(length(allMembers) != length(score))
               warning("score length don't match.")
             
@@ -769,14 +769,14 @@ setMethod("initialize", "classicScore",
                                       groupMembers, testStatPar = list(...))
             
             .Object@score <- as.numeric(score)[index]
-            .Object@.alternative <- .alternative
+            .Object@scoreOrder <- scoreOrder
             .Object
           })
 
-if(!isGeneric("alternative"))
-  setGeneric("alternative", function(object) standardGeneric("alternative"))
+if(!isGeneric("scoreOrder"))
+  setGeneric("scoreOrder", function(object) standardGeneric("scoreOrder"))
 
-setMethod("alternative", "classicScore", function(object) object@.alternative)
+setMethod("scoreOrder", "classicScore", function(object) object@scoreOrder)
 
 ## methods to get the score 
 if(!isGeneric("allScore"))
@@ -828,7 +828,7 @@ setMethod("score<-", "classicScore",
             if(!all(object@members %in% names(value)))
               stop("You need to build a new object!")
             
-            value <- sort(value, object@.alternative)
+            value <- sort(value, object@scoreOrder)
             object@allMembers <- names(value)
             object@score <- as.numeric(value)
 
@@ -937,13 +937,13 @@ setMethod("initialize", "elimScore",
                    allMembers = character(),
                    groupMembers = character(),
                    score = numeric(),
-                   alternative = "less",
+                   scoreOrder = "increasing",
                    elim = character(),
                    cutOff = 0.01,
                    ...) {
             .Object <- callNextMethod(.Object, testStatistic, name,
                                       allMembers, groupMembers, score,
-                                      alternative, testStatPar = list(...))
+                                      scoreOrder, testStatPar = list(...))
 
             .Object@elim <- which(.Object@members %in% elim)
             .Object@cutOff <- cutOff

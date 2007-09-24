@@ -2,6 +2,54 @@
 ## file containing all the algorithms for scoring GO terms.
 
 
+## High-level function for runing the GO algorithms
+
+
+.algoComp <- rbind(c(1, 0, 1, 1, 0, 0),
+                   c(1, 0, 1, 1, 0, 0),
+                   c(1, 0, 0, 0, 0, 0),
+                   c(0, 0, 0, 0, 0, 0),
+                   c(0, 0, 0, 0, 0, 0))
+rownames(.algoComp) <- c("classic", "elim", "weight", "we", "grossmann")
+colnames(.algoComp) <- c("fisher", "z", "ks", "t", "globaltest", "category")
+
+.testNames <- c("GOFisherTest" , "GOKSTest", "GOtTest")
+names(.testNames) <- c("fisher", "ks", "t")
+
+
+## function run(topGOdata, "elim", "KS", ...)
+## ... are parameters for the test statistic
+
+if(!isGeneric("run")) 
+  setGeneric("run", function(object, algorithm, statistic, ...) standardGeneric("run"))
+
+setMethod("run",
+          signature(object = "topGOdata", algorithm = "character", statistic = "character"),
+          function(object, algorithm, statistic, ...) { ## ... parameters for the test statistic
+
+            statistic <- tolower(statistic)
+            algorithm <- tolower(algorithm)
+            ## we check if the algorithm support the given test statistic
+            if(.algoComp[algorithm, statistic] == 0)
+              stop("The algorithm doesn't support the given test statistic")
+
+            ## strong asumtions! 
+            testType <- as.character(getMethods(.testNames[statistic])@methods[[1]]@target)
+            testType <- sub("classic", algorithm, testType) 
+            if(!isClass(testType))
+              stop("Error in defining the test statistic Class")
+            
+            test.stat <- new(testType, testStatistic = get(.testNames[statistic]), name = statistic, ...)
+
+            return(getSigGroups(object, test.stat))
+          })
+
+##resultKS <- run(GOdata, algorithm = "classic", statistic = "KS")
+
+
+######################################################################
+######################################################################
+
 
 ## This function is use for dispatching each algorithm
 ## probably more checking could be done in the end!
@@ -28,8 +76,9 @@ setMethod("getSigGroups",
             index <- x$Significant == 0
             not.sigTerms <- rownames(x)[index]
             .sigTerms <- rownames(x)[!index]
-            
-            cat(paste("\n\t\t The algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
+
+            cat("\n\t\t\t -- Classic Algorithm -- \n")
+            cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
   
             ## apply the algorithm
             algoRes <- .sigGroups.classic(genesInTerm(object, .sigTerms), test.stat)
@@ -61,7 +110,11 @@ setMethod("getSigGroups",
             }
 
             GOlist <- genesInTerm(object)
-            cat(paste("\n\t\t The algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
+            cat("\n\t\t\t -- Classic Algorithm -- \n")
+            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
+            cat("\t\t parameters: \n")
+            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            cat("\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"), "\n")
             
             algoRes <- .sigGroups.classic(GOlist, test.stat)
                         
@@ -91,9 +144,13 @@ setMethod("getSigGroups",
             index <- x$Significant == 0
             not.sigTerms <- rownames(x)[index]
             .sigTerms <- rownames(x)[!index]
-            
-            cat(paste("\n\t\t The algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
 
+            cat("\n\t\t\t -- Elim Algorithm -- \n")
+            cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
+            cat("\t\t parameters: \n")
+            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            cat("\t\t\t cutOff: ", cutOff(test.stat), "\n")
+  
             ## restrict the graph
             g <- mySubGraph(.sigTerms, graph(object))
             ## apply the algorithm
@@ -128,8 +185,13 @@ setMethod("getSigGroups",
             }
 
             GOlist <- genesInTerm(object)
-            cat(paste("\n\t\t The algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
-
+            cat("\n\t\t\t -- Elim Algorithm -- \n")
+            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
+            cat("\t\t parameters: \n")
+            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            cat("\t\t\t cutOff: ", cutOff(test.stat), "\n")
+            cat("\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"), "\n")
+            
             ## apply the algorithm
             algoRes <- .sigGroups.elim(graph(object), test.stat)
             
@@ -160,8 +222,11 @@ setMethod("getSigGroups",
             not.sigTerms <- rownames(x)[index]
             .sigTerms <- rownames(x)[!index]
             
+            cat("\n\t\t\t -- Weight Algorithm -- \n")
             cat(paste("\n\t\t The algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
-
+            cat("\t\t parameters: \n")
+            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            
             ## restrict the graph
             g <- mySubGraph(.sigTerms, graph(object))
             ## apply the algorithm
@@ -206,7 +271,7 @@ setMethod("getSigGroups",
   
   ##adjs.cutOff <- cutOff(test.stat) / numNodes(goDAG)
   adjs.cutOff <- cutOff(test.stat)
-  cat(paste("\n\t\t Parameters:\t cutOff = ", adjs.cutOff, "\n", sep =""))
+  #cat(paste("\n\t\t Parameters:\t cutOff = ", adjs.cutOff, "\n", sep =""))
   
   ## we use a lookup table to search for nodes that have were significant
   sigNodes.LookUP <- new.env(hash = T, parent = emptyenv())

@@ -318,6 +318,7 @@ setMethod("genTable",
           function(object, resList, orderBy = 1, ranksOf = 1,
                    topNodes = 10, numChar = 40, use.levels = FALSE) {
             
+            .Deprecated("GenTable", package = "topGO", "Use GenTable()")
             l <- .sigAllMethods(resList)
             index <- order(l[, orderBy])
             l <- l[index, ]

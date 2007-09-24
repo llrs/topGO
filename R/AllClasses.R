@@ -88,9 +88,9 @@ setClass("classicScore", contains = "groupStats",
            ## the score for each member, the most important
            ## member has the highest score
            score = "numeric",
-           ## alternative = TRUE (greater) the max(score) is considering the best score
-           ## alternative = FALSE (less) the min(score) is considre the best score
-           .alternative = "logical"))
+           ## scoreOrder = TRUE (decreasing) the max(score) is considering the best score
+           ## scoreOrder = FALSE (increasing) the min(score) is considre the best score
+           scoreOrder = "logical"))
 
 
 ######################################################################

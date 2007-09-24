@@ -1,3 +1,4 @@
+
 \name{weightScore-class}
 \docType{class}
 \alias{weightScore-class}
@@ -12,7 +13,7 @@ Objects can be created by calls of the form \code{new("weightScore", testStatist
 	 \describe{
     \item{\code{weights}:}{Object of class \code{"numeric"} ~~ }
     \item{\code{score}:}{Object of class \code{"numeric"} ~~ }
-    \item{\code{.alternative}:}{Object of class \code{"logical"} ~~ }
+    \item{\code{scoreOrder}:}{Object of class \code{"logical"} ~~ }
     \item{\code{name}:}{Object of class \code{"character"} ~~ }
     \item{\code{allMembers}:}{Object of class \code{"character"} ~~ }
     \item{\code{members}:}{Object of class \code{"character"} ~~ }

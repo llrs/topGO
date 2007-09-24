@@ -2,7 +2,7 @@
 \docType{class}
 \alias{classicScore-class}
 
-\alias{alternative}
+\alias{scoreOrder}
 \alias{membersScore}
 \alias{rankMembers}
 \alias{score<-}
@@ -11,7 +11,7 @@
 \alias{allScore,classicScore,missing-method}
 \alias{allScore,classicScore,logical-method}
 
-\alias{alternative,classicScore-method}
+\alias{scoreOrder,classicScore-method}
 \alias{initialize,classicScore-method}
 \alias{membersScore,classicScore-method}
 \alias{rankMembers,classicScore-method}
@@ -50,7 +50,7 @@ Class \code{"groupStats"}, directly.
 \section{Methods}{
   \describe{
     \item{allScore}{Method to obtain the score of all members.}
-    \item{alternative}{Returns TRUE if the score should be ordered
+    \item{scoreOrder}{Returns TRUE if the score should be ordered
       increasing, FALSE otherwise.}
     \item{membersScore}{\code{signature(object = "classicScore")}: ... }
     \item{rankMembers}{\code{signature(object = "classicScore")}: ... }

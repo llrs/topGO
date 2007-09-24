@@ -1,6 +1,7 @@
 \name{getSigGroups}
 
 \alias{getSigGroups}
+\alias{run}
 
 \alias{getSigGroups-methods}
 \alias{getSigGroups,topGOdata,classicCount-method}
@@ -9,6 +10,7 @@
 \alias{getSigGroups,topGOdata,elimScore-method}
 \alias{getSigGroups,topGOdata,weightCount-method}
 
+\alias{run,topGOdata,character,character-method}
 
 %- Also NEED an '\alias' for EACH other topic documented here.
 
