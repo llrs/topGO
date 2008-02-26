@@ -8,7 +8,7 @@
 ## interesting genes and the rest
 
 ## TODO: it will be a good idea to replace the allGenes and allScore with an
-## exprSet class. In this way we can use tests like global test, globalAncova....
+## ExpressionSet class. In this way we can use tests like global test, globalAncova....
 ##  -- ALL variables sarting with . are just for internal class usage (private)
 
 

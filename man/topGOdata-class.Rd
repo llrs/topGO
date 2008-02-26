@@ -41,7 +41,6 @@
 \alias{scoresInTerm,topGOdata,missing-method}
 \alias{scoresInTerm,topGOdata,character-method}
 
-
 \alias{show,topGOdata-method}
 \alias{allGenes,topGOdata-method}
 \alias{attrInTerm,topGOdata,character,character-method}
@@ -76,10 +75,9 @@
 \alias{updateTerm<-,topGOdata,character-method}
 \alias{usedGO,topGOdata-method}
 
-
 \title{Class "topGOdata"}
 \description{
-  TODO: The node atributes are environments containing the genes/probes
+  TODO: The node attributes are environments containing the genes/probes
   annotated to the respective node
 
   If genes is a numeric vector than this should represent the gene's
@@ -87,8 +85,8 @@
   interesting genes and the rest
   
   TODO: it will be a good idea to replace the allGenes and allScore with an
-  exprSet class. In this way we can use tests like global test, globalAncova....
-  -- ALL variables sarting with . are just for internal class usage (private)
+  ExpressionSet class. In this way we can use tests like global test, globalAncova....
+  -- ALL variables starting with . are just for internal class usage (private)
   
 }
 
@@ -155,14 +153,11 @@
   \code{\link{annFUN.hgu}}
 }
 
-
 \examples{
-
 ## load the ALL dataset and the annotation library
 library(ALL); data(ALL)
 affyLib <- annotation(ALL)
 library(package = affyLib, character.only = TRUE)
-
 
 library(genefilter)
 f1 <- pOverA(0.25, log2(100))
@@ -185,9 +180,9 @@ hist(geneList[geneList < 1], 100)
 topDiffGenes <- function(allScore) {
   return(allScore < 0.01)
 }
+
 ## how many differentially expressed genes are:
 sum(topDiffGenes(geneList))
-
 
 ## build the topGOdata class 
 GOdata <- new("topGOdata",
