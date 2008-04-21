@@ -43,7 +43,7 @@ groupGOTerms(where)
 }
 
 \examples{
-
+groupGOTerms()
 }
 
 \keyword{misc}

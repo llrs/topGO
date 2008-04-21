@@ -28,6 +28,8 @@ setClass("topGOdata",
            feasible = "logical",
            ## the GO ontology: graph structure and annotations: leaves to root
            graph = "graphNEL",
+           ## nodes in the graph with fewer than "nodeSize" genes are removed
+           nodeSize = "integer",
            ## expression matrix                                     #!
            expressionMatrix = "ANY",                                #!
            ## phenotype information (groups that shall be compared) #!
@@ -35,7 +37,7 @@ setClass("topGOdata",
 
 
 
-######################################################################
+######################## topGOresult class ######################
 
 ## probably will add more infos with time here
 setClass("topGOresult",
@@ -69,7 +71,8 @@ setClass("groupStats",
            testStatPar = "list",
            "VIRTUAL"))
 
-#################### classicCount class ####################
+
+#################### classicCount class #########################
 ## A class that extends the virtual class groupStats by adding 
 ## a slot representing the significant members.
 
@@ -79,7 +82,7 @@ setClass("classicCount", contains = "groupStats",
            significant = "integer"))
 
 
-#################### classicScore class ####################
+##################### classicScore class ########################
 ## A class that extends the virtual class groupStats by adding 
 ## a slot representing the score of each gene. (used for KS test)
 
@@ -93,34 +96,68 @@ setClass("classicScore", contains = "groupStats",
            scoreOrder = "logical"))
 
 
-######################################################################
+##################### classicExpr class #########################
+## A class that extends the virtual class groupStats. Contains:
+##  - a slot representing the gene expression matrix (for all genes).
+##  - a slot representing the phenotipic data (can be a matrix or a vector!).
+## Used for GlobalTest.
+
+## the expression matrix will not have row names. The row names will be stored in
+## allMembers slot of the parent class
+
+setClass("classicExpr", contains = "groupStats",
+         representation = representation(
+           ## the expression matrix
+           eData = "environment", ## we store the expr matrix in this environment for fast class copying 
+           ## scoreOrder = TRUE (decreasing) the max(score) is considering the best score
+           pType = "factor"))
 
 
-#################### elimCount class ####################
 
-setClass("elimCount", contains = "classicCount", 
+
+##################### removeCount class #########################
+## used for elim2 algorithm
+setClass("removeCount", contains = "classicCount", 
          representation = representation(
            ## the index of which of the group members should be removed
-           elim = "integer",
-           cutOff = "numeric"))
+           elim = "integer"))
 
 
-#################### elimScore class ####################
-
-setClass("elimScore", contains = "classicScore",
+##################### removeScore class #########################
+setClass("removeScore", contains = "classicScore",
          representation = representation(
            ## the score for each member, the most important
            ## member has the highest score
-           elim = "integer",
+           elim = "integer"))
+
+
+##################### removeExpr class #########################
+setClass("removeExpr", contains = "classicExpr",
+         representation = representation(
+           elim = "integer"))
+
+
+
+####################### elimCount class #########################
+setClass("elimCount", contains = "removeCount", 
+         representation = representation(
+           cutOff = "numeric"))
+
+
+####################### elimScore class #########################
+setClass("elimScore", contains = "removeScore",
+         representation = representation(
            cutOff = "numeric")) 
 
 
+####################### elimExpr class ##########################
+setClass("elimExpr", contains = "removeExpr",
+         representation = representation(
+           cutOff = "numeric"))
 
-######################################################################
 
 
-#################### weightCount class ####################
-
+###################### weightCount class ########################
 setClass("weightCount", contains = "classicCount", 
          representation = representation(
            weights = "numeric",
@@ -130,11 +167,24 @@ setClass("weightCount", contains = "classicCount",
            roundFun = "function"))
 
 
-#################### weightScore class ####################
+#################### parentChild class #########################
+##
+## the parents information is stored in the class' slots
+##
+## allMembers - character vector containing all genes annotated in the parent(s).
+##              If the group has two or more parents, the genes are
+##              concatenated in this vector. The separation between
+##              parents is given by the splitIndex.
+## splitIndex - the possition in the allMembers where a new parent starts
+## joinFun - the way the genes in the parents are joinded: union or intersection
 
-setClass("weightScore", contains = "classicScore",
+setClass("parentChild", contains = "classicCount", 
          representation = representation(
-           ## the score for each member, the most important
-           ## member has the highest score
-           weights = "numeric"))
+           splitIndex = "integer",
+           joinFun = "character"))
 
+## implements same functionality as parentChild but the join operation
+## for the parents is done when the class is build (or updated)
+setClass("pC", contains = "classicCount", 
+         representation = representation(
+           joinFun = "function"))

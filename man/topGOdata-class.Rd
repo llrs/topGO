@@ -150,13 +150,13 @@
 \seealso{
   \code{\link{buildLevels}},
   \code{\link{mapGenes2GOgraph}},
-  \code{\link{annFUN.hgu}}
+  \code{\link{annFUN}}
 }
 
 \examples{
 ## load the ALL dataset and the annotation library
 library(ALL); data(ALL)
-affyLib <- annotation(ALL)
+affyLib <- paste(annotation(ALL), "db", sep = ".")
 library(package = affyLib, character.only = TRUE)
 
 library(genefilter)
@@ -190,7 +190,7 @@ GOdata <- new("topGOdata",
               allGenes = geneList,
               geneSel = topDiffGenes,
               description = "GO analysis of ALL data: Differential Expression between B-cell and T-cell",
-              annot = annFUN.hgu,
+              annot = annFUN.db,
               affyLib = affyLib)
 
 ## display the GOdata object

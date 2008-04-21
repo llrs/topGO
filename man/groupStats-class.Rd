@@ -10,7 +10,6 @@
 \alias{Name}
 \alias{numAllMembers}
 \alias{numMembers}
-\alias{runTest}
 \alias{testStatistic}
 \alias{testStatPar}
 \alias{updateGroup}
@@ -26,7 +25,10 @@
 \alias{Name,groupStats-method}
 \alias{numAllMembers,groupStats-method}
 \alias{numMembers,groupStats-method}
+
 \alias{runTest,groupStats-method}
+\alias{runTest,groupStats,missing,missing-method}
+
 \alias{testStatistic,groupStats-method}
 \alias{testStatPar,groupStats-method}
 \alias{updateGroup,groupStats,character,character-method}

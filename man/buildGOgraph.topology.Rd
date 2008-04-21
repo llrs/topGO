@@ -10,12 +10,12 @@
 }
 
 \usage{
-buildGOgraph.topology(mostSpecificGOs, whichOnto)
+buildGOgraph.topology(knownNodes, whichOnto = "BP")
 }
 
 
 \arguments{
-  \item{mostSpecificGOs}{list of GO terms}
+  \item{knownNodes}{character vector of GO terms}
   \item{whichOnto}{character string specifying one of the three GO
     ontologies: \code{"BP"}, \code{"MF"}, \code{"CC"}}
 }
@@ -33,7 +33,7 @@ buildGOgraph.topology(mostSpecificGOs, whichOnto)
   \code{\link{topGOdata-class}},
   \code{\link{buildLevels}},
   \code{\link{mapGenes2GOgraph}},
-  \code{\link{annFUN.hgu}}
+  \code{\link{annFUN}}
 }
 
 

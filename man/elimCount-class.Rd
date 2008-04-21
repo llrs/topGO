@@ -2,6 +2,7 @@
 \docType{class}
 
 \alias{elimCount-class}
+\alias{removeCount-class}
 
 \alias{cutOff}
 \alias{cutOff,elimCount-method}
@@ -10,10 +11,13 @@
 
 \alias{elim}
 \alias{elim,elimCount-method}
+\alias{elim,removeCount-method}
 \alias{elim<-}
 \alias{elim<-,elimCount-method}
+\alias{elim<-,removeCount-method}
 
 \alias{initialize,elimCount-method}
+\alias{initialize,removeCount-method}
 
 \alias{contTable,elimCount-method}
 \alias{numSigAll,elimCount-method}
@@ -24,13 +28,19 @@
 \alias{sigMembers<-,elimCount-method}
 \alias{sigMembers,elimCount-method}
 
+
+\alias{numAllMembers,removeCount-method}
+\alias{numMembers,removeCount-method}
+\alias{numSigAll,removeCount-method}
+\alias{numSigMembers,removeCount-method}
+\alias{sigAllMembers,removeCount-method}
+\alias{sigMembers,removeCount-method}
+
 \alias{GOFisherTest,elimCount-method}
 
 
-
-
   
-\title{Class "elimCount"}
+\title{Classes "elimCount" and "removeCount"}
 \description{	 ~~ A concise (1-5 lines) description of what the class is.  ~~}
 
 \section{Objects from the Class}{

@@ -36,7 +36,7 @@ mapGenes2GOgraph(dag, mostSpecificGOs, nodeLevel = buildLevels(dag, leafs2root =
   \code{\link{topGOdata-class}},
   \code{\link{buildLevels}},
   \code{\link{buildGOgraph.topology}},
-  \code{\link{annFUN.hgu}}
+  \code{\link{annFUN}}
 }
 
 

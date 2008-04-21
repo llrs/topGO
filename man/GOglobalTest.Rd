@@ -1,18 +1,16 @@
-\name{GOKSTest}
+\name{GOglobalTest}
 
-\alias{GOKSTest}
-\alias{GOtTest}
+\alias{GOglobalTest}
 
-\title{ Kolmogorov-Smirnov test for gene sets}
+\title{Globaltest for gene sets}
 
 
 \description{
-  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Warping finction for globaltest.
 }
 
 \usage{
-GOKSTest(object)
-GOtTest(object)
+GOglobalTest(object)
 }
 
 
@@ -26,7 +24,7 @@ GOtTest(object)
 
 
 \value{
-  returns the p-value of the Running-Sum-Statistic
+  p-value of the ....
 }
 
 \author{Adrian Alexa}

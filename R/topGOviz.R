@@ -343,7 +343,7 @@ showSigOfNodes <- function(GOdata, termsP.value, firstTerms = 10, reverse = TRUE
   
   ## we want to get aditional nodes
   if(putCL) {
-    goDAG.r2ls <- reverseArch(graph(GOdata))
+    goDAG.r2l <- reverseArch(graph(GOdata))
 
     for(i in 1:putCL) {
       newNodes <- unique(unlist(adj(goDAG.r2l, baseNodes)))
@@ -440,7 +440,7 @@ showSigOfNodes <- function(GOdata, termsP.value, firstTerms = 10, reverse = TRUE
 ## this function is compiling a .dot file from the dag
 printDOT <- function(dag, sigNodes = NULL, genNodes = NULL, wantedNodes = NULL,
                      showEdges = T, useFullNames = F, oldSigNodes = NULL,
-                     nodeInfo = NULL, export.to.dot.file = .DOT.FILE.NAME) {
+                     nodeInfo = NULL, export.to.dot.file = "MyGraph.dot") {
   
   ## we set the global Graphviz attributes
   graphAttrs <- getDefaultAttrs(layoutType = 'dot')

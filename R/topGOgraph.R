@@ -1,14 +1,3 @@
-######################## BUG ########################
-## this seems a bug in the subGraph() .... need to be corected 
-mySubGraph <- function(snodes, graph) {
-  retGraph <- subGraph(snodes, graph)
-  retGraph@nodeData@defaults <- graph@nodeData@defaults
-  
-  return(retGraph)
-}
-
-
-
 ############################   reverseArch   ############################
 ## Simple function to invert the direction of edges in an directed graph.
 ## The returned graph is of class graphNEL.
@@ -61,12 +50,8 @@ getGraphRoot <- function(dag,
 ########################   buildGOgraph.topology   ########################
 ## The structure of the GO graph is build recursivly.
 
-buildGOgraph.topology <- function(mostSpecificGOs,
-                                  whichOnto = 'BP') {
+buildGOgraph.topology <- function(knownNodes, whichOnto = "BP") {
 
-  ## the nodes that we know that are in the graph
-  knownNodes <- names(mostSpecificGOs)
-  
   ## first build the lookUp table for the GO terms
   nodeLookUp <- new.env(hash = T, parent = emptyenv())
   GOOTerm <- get(paste('GO', whichOnto, 'Term', sep = ''), mode = 'environment')
@@ -83,17 +68,11 @@ buildGOgraph.topology <- function(mostSpecificGOs,
   GOParents <- get(paste('GO', whichOnto, 'PARENTS', sep = ''))
 
   ## get the root of the ontology
-  GO.getRoot <- function(GOParents) {
-    terms <- as.list(GOParents)
-    ii <- sapply(GOParents, length) == 1
-    terms <- terms[ii]
-    
-    nn <- unlist(terms, use.names = FALSE)
-    return(names(terms)[which(nn == "all")])
-  }
-  
-  GENE.ONTO.ROOT <- GO.getRoot(GOParents)
+  GENE.ONTO.ROOT <- as.character(revmap(GOParents)$all)
 
+  ## we read all the database once and the access the list
+  adjLookUP <- as.list(GOParents)
+  
   ## we use an environment of environments to store edges: (this way is faster)
   ## in the end we will coerce it to a list of list and build a graphNEL obj. 
   edgeEnv <- new.env(hash = T, parent = emptyenv())
@@ -118,7 +97,7 @@ buildGOgraph.topology <- function(mostSpecificGOs,
     if(node == GENE.ONTO.ROOT) 
       return(2)
 
-    adjNodes <- get(node, envir = GOParents, mode = 'character', inherits = FALSE)
+    adjNodes <- adjLookUP[[node]]
 
     ## debuging point! should not happen!
     if(length(adjNodes) == 0)
@@ -135,7 +114,7 @@ buildGOgraph.topology <- function(mostSpecificGOs,
 
   ## we start from the most specific nodes
   lapply(knownNodes, buildInducedGraph)
-
+  
   ## now we must transform our env into a Graph structure
   ## for now we use lapply, later we can do it with eapply
   .graphNodes <- ls(edgeEnv)
@@ -151,10 +130,6 @@ buildGOgraph.topology <- function(mostSpecificGOs,
                       nodes = .graphNodes,
                       edgeL = .edgeList,
                       edgemode = 'directed')
-  
-
-  ## if we want to remeve the ROOT of the GO 
-  #GOgraph.topo <-  removeNode(GENE.ONTO.ROOT, GOgraph.topo)
   
   return(GOgraph.topo)
 }
@@ -204,7 +179,7 @@ inducedGraph <- function(dag,
   ## we start from the specified nodes
   lapply(startNodes, buildInducedGraph)
 
-  return(mySubGraph(ls(nodeLookUp), dag))
+  return(subGraph(ls(nodeLookUp), dag))
 }
 
 
@@ -333,8 +308,6 @@ mapGenes2GOgraph <- function(dag,
              return(NULL)
            })
   }
-
-  ##  browser()
 
   ## Assign for each node in the graph the coresponding environment
   nodeDataDefaults(dag, attr = "genes") <- emptyenv()

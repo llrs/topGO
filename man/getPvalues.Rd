@@ -4,8 +4,8 @@
 
 
 \title{Function to compute p-values of a t-test for a gene expression matrix.}
-\description{
-
+\description{Warping function for computing the p-vales for a gene
+  expression matrix.
 }
 
 \usage{
@@ -34,7 +34,10 @@
 
 \author{Adrian Alexa}
 
+
 \seealso{
+  \code{\link{GOKSTest}},  \code{\link{groupStats-class}},
+  \code{\link{getSigGroups-methods}}
 }
 
 

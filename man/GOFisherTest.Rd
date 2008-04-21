@@ -17,11 +17,10 @@ GOFisherTest(object)
   \item{object}{ ~~Describe \code{object} here~~ }
 }
 
-\details{
-}
+\details{fisher test based on contingency table}
 
 \value{
-  .......
+  p-value ...
 }
 
 \author{Adrian Alexa}

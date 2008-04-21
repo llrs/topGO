@@ -1,6 +1,7 @@
 \name{annFUN}
 
-\alias{annFUN.hgu}
+\alias{annFUN.db}
+\alias{annFUN}
 \alias{annFUN.GO2genes}
 \alias{annFUN.gene2GO}
 
@@ -12,7 +13,8 @@
 
 
 \usage{
-annFUN.hgu(whichOnto, feasibleGenes = NULL, affyLib)
+annFUN.db(whichOnto, feasibleGenes = NULL, affyLib)
+annFUN(whichOnto, feasibleGenes = NULL, affyLib)
 annFUN.gene2GO(whichOnto, feasibleGenes = NULL, gene2GO)
 annFUN.GO2genes(whichOnto, feasibleGenes = NULL, GO2genes)
 }
@@ -41,11 +43,10 @@ annFUN.GO2genes(whichOnto, feasibleGenes = NULL, GO2genes)
 }
 
 \details{
-  The function \code{annFUN.hgu} should be used when the gene
-  identifiers are Affymetrix IDs. It uses the mappings provided
+  The function \code{annFUN.db} uses the mappings provided
   in the Bioconductor annotation data packages. For example, if the
   Affymetrix hgu133a chip it is used, then the user should set
-  \code{affyLib = "hgu133a"}.
+  \code{affyLib = "hgu133a.db"}.
 
   The functions \code{annFUN.gene2GO} and \code{annFUN.GO2genes} are
   used when the user provide his own annotations.
@@ -68,7 +69,7 @@ annFUN.GO2genes(whichOnto, feasibleGenes = NULL, GO2genes)
 
 \examples{
 
-library(hgu133a)
+library(hgu133a.db)
 set.seed(111)
 
 

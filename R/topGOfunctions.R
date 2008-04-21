@@ -16,30 +16,50 @@ groupGOTerms <- function(where) {
   if(missing(where))
     where <- .GlobalEnv
   where <- as.environment(where)
-  
-  assign("GOBPTerm", GOBPTerm <- new.env(hash = T, parent = emptyenv()), envir = where)
-  assign("GOCCTerm", GOCCTerm <- new.env(hash = T, parent = emptyenv()), envir = where)
-  assign("GOMFTerm", GOMFTerm <- new.env(hash = T, parent = emptyenv()), envir = where)
-  
-  require('AnnotationDbi') || stop('package AnnotationDbi is required')
 
-  eapply(GOTERM,
-         function(term) {
-           onto <- Ontology(term)
-           if(!is.na(onto))
-             switch(onto,
-                    BP = assign(GOID(term), term, envir = GOBPTerm),
-                    MF = assign(GOID(term), term, envir = GOMFTerm),
-                    CC = assign(GOID(term), term, envir = GOCCTerm))
-         })
+  require('GO.db') || stop('package GO.db is required')
+
+  sql <- "SELECT go_id FROM go_term WHERE ontology IN"
+  for(onto in c("BP", "MF", "CC")) {
+    xx <- dbGetQuery(GO_dbconn(), paste(sql, "('", onto, "');", sep = ""))$go_id
+    e <- new.env(hash = T, parent = emptyenv())
+    multiassign(xx, value = rep(TRUE, length(xx)), envir = e)
+    assign(paste("GO", onto, "Term", sep = ""), e, envir = where)
+  }
 
   cat("\ngroupGOTerms: \tGOBPTerm, GOMFTerm, GOCCTerm environments built.\n")
 }
 
 
-annFUN.hgu <- function(whichOnto, feasibleGenes = NULL, affyLib = "hgu133a") {
 
+
+annFUN.db <- function(whichOnto, feasibleGenes = NULL, affyLib) {
+  
   require(affyLib, character.only = TRUE) || stop(paste('package', affyLib, 'is required', sep = " "))
+  affyLib <- sub(".db$", "", affyLib)
+  mapping <- get(paste(affyLib, 'GO2PROBE', sep = ''))
+  
+  if(is.null(feasibleGenes))
+    feasibleGenes <- ls(get(paste(affyLib, 'ACCNUM', sep = '')))
+  ## Lkeys(get(paste(affyLib, 'ACCNUM', sep = ''))))
+  
+  ontoGO <- get(paste('GO', whichOnto, "Term", sep = ''))
+  goodGO <- intersect(ls(ontoGO), ls(mapping))
+
+  ## we can use a faster intersction here
+  ## can be optimize using a Bimap and split, but the intersection is still important
+  GOtoAffy <- lapply(mget(goodGO, envir = mapping, ifnotfound = NA),
+                     intersect, feasibleGenes)
+  
+  emptyTerms <- sapply(GOtoAffy, length) == 0
+
+  return(GOtoAffy[!emptyTerms])
+}
+  
+
+annFUN <- function(whichOnto, feasibleGenes = NULL, affyLib) {
+    
+  require(affyLib., character.only = TRUE) || stop(paste('package', affyLib, 'is required', sep = " "))
   mapping <- get(paste(affyLib, 'GO2PROBE', sep = ''))
 
   if(is.null(feasibleGenes))
@@ -148,7 +168,7 @@ annHASH.gene2GO <- function(whichOnto, feasibleGenes = NULL, gene2GO) {
 
 ## the annotation function
 annFUN.GO2genes <- function(whichOnto, feasibleGenes = NULL, GO2genes) {
-
+  
   ## GO terms annotated to the specified ontology 
   ontoGO <- get(paste("GO", whichOnto, "Term", sep = ""))
 
@@ -167,8 +187,9 @@ annFUN.GO2genes <- function(whichOnto, feasibleGenes = NULL, GO2genes) {
 
 
 ## function returning all genes that can be used for analysis 
-feasibleGenes.Affy <- function(affyLib = "hgu133a", whichOnto) {
+feasibleGenes.db <- function(affyLib, whichOnto) {
 
+  affyLib <- sub(".db$", "", affyLib)
   mapping <- get(paste(affyLib, 'GO2PROBE', sep = ''))
   
   ontoGO <- get(paste('GO', whichOnto, "Term", sep = ''))
@@ -185,6 +206,17 @@ feasibleGenes.Affy <- function(affyLib = "hgu133a", whichOnto) {
 if(!isGeneric("printGenes"))
   setGeneric("printGenes", function(object, whichTerms, file, ...) standardGeneric("printGenes"))
 
+
+########
+## TODO
+##
+## remove the affyLib argument and replace it with a function which,
+## given a list of genes will provide information about these genes
+##
+## TODO
+########
+
+
 ## if the file argument is missing the function will just return
 ## a list of data.frames, each data.frame containg the gene information for specified GO term
 setMethod("printGenes",
@@ -196,6 +228,8 @@ setMethod("printGenes",
             all.genes <- character()
             lapply(term.genes, function(x) all.genes <<- union(x, all.genes))
 
+            affyLib <- sub(".db$", "", affyLib)
+            
             LL.lib <- get(paste(affyLib, "ENTREZID", sep = ""))
             Sym.lib <- get(paste(affyLib, "SYMBOL", sep = ""))
             GNAME.lib <- get(paste(affyLib, "GENENAME", sep = ""))
@@ -279,11 +313,16 @@ setMethod("printGenes",
 
  ######################################################################
 
+
 .getTermsDefinition <- function(whichTerms, ontology, numChar = 20, multipLines = FALSE) {
   
-  GOOTerm <- get(paste('GO', ontology, 'Term', sep = ''), mode = 'environment')
-  termsNames <- sapply(mget(whichTerms, envir = GOOTerm, ifnotfound = NA), Term)
-
+  whichTerms <- paste(paste("'", whichTerms, "'", sep = ""), collapse = ",")
+  retVal <- dbGetQuery(GO_dbconn(), paste("SELECT term, go_id FROM go_term WHERE ontology IN",
+                                          "('", ontology, "') AND go_id IN (", whichTerms, ");", sep = ""))
+  
+  termsNames <- retVal$term
+  names(termsNames) <- retVal$go_id
+  
   if(!multipLines) 
     shortNames <- paste(substr(termsNames, 1, numChar),
                         ifelse(nchar(termsNames) > numChar, '...', ''), sep = '')
@@ -300,64 +339,17 @@ setMethod("printGenes",
 
 
 ## methodsSig contains a named vector of p-values for each run method
-.sigAllMethods <- function (methodsSig)  {
-  names.index <- names(sort(methodsSig[[1]]))
-  return(data.frame(lapply(methodsSig, function(x) x[names.index]), check.names = FALSE))
+.sigAllMethods <- function (methodsSig) 
+{
+  names.index <- names(methodsSig[[1]])
+  retval <- as.data.frame(lapply(methodsSig, function(x) x[names.index]))
+  names(retval) <- names(methodsSig)
+  return(retval)
 }
 
 
-if(!isGeneric("genTable"))
-  setGeneric("genTable", function(object, resList, ...) standardGeneric("genTable"))
-
-setMethod("genTable",
-          signature(object = "topGOdata", resList = "list"),
-          ## orderBy = "ANY", ## integer or character (index/name)
-          ## ranksOf = "ANY", ## which ranks to be computed (integer/character)
-          ## topNodes = "integer",
-          ## numChar = "integer"),
-          function(object, resList, orderBy = 1, ranksOf = 1,
-                   topNodes = 10, numChar = 40, use.levels = FALSE) {
-            
-            .Deprecated("GenTable", package = "topGO", "Use GenTable()")
-            l <- .sigAllMethods(resList)
-            index <- order(l[, orderBy])
-            l <- l[index, ]
-            
-            rr <- rank(l[, ranksOf], ties = "first")
-            
-            whichTerms <- rownames(l)[1:topNodes]
-            l <- l[whichTerms, ]
-            rr <- as.integer(rr[1:topNodes])
-
-            shortNames <- .getTermsDefinition(whichTerms, ontology(object), numChar = numChar)
-                                              
-            infoMat <- data.frame('GO ID' = whichTerms, 'Term' = shortNames, stringsAsFactors = FALSE)
-            
-            ## put the levels of the GO
-            if(use.levels) {
-              nodeLevel <- buildLevels(graph(object), leafs2root = TRUE)
-              nodeLevel <- unlist(mget(whichTerms, envir = nodeLevel$nodes2level))
-              infoMat <- data.frame(infoMat, Level = as.integer(nodeLevel))
-            }
-            
-            annoStat <- termStat(object, whichTerms)
-
-            dim(rr) <- c(length(rr), 1)
-            colnames(rr) <- paste("Rank in ", ifelse(is.character(ranksOf), ranksOf, colnames(l)[ranksOf]), sep = "")
-
-            infoMat <- data.frame(infoMat, annoStat, rr,
-                                  apply(l, 2, format.pval, dig = 2, eps = 1e-30),
-                                  check.names = FALSE, stringsAsFactors = FALSE)
-            
-            ##rownames(infoMat) <- whichTerms
-            rownames(infoMat) <- 1:length(whichTerms)
-            
-            return(infoMat)            
-          })
-
 
 ######################################################################
-## try to make genTable to use the topGOresult objects
 if(!isGeneric("GenTable"))
   setGeneric("GenTable", function(object, ...) standardGeneric("GenTable"))
 
@@ -370,28 +362,36 @@ setMethod("GenTable",
           ## numChar = "integer",
           ## useLevels = "logical"),
           function(object, ..., orderBy = 1, ranksOf = 2,
-                   topNodes = 10, numChar = 40, useLevels = FALSE) {
-
+                   topNodes = 10, numChar = 40,
+                   format.FUN = format.pval, decreasing = FALSE,
+                   useLevels = FALSE) {
+            
             resList <- list(...)
-
+            
             ## first for the class of the elements in the list
             if(!all(sapply(resList, is, "topGOresult")))
               stop("Use: topGOdata, topGOresult_1, topGOresult_2, ..., \"parameters\".")
             ## obtain the score from the objects
             resList <- lapply(resList, score)
-
+            
             ## order the scores and take care of the case in which only one result is provided
             ## in such case the orderBy and ranksOf parameters are ignored.
             if(length(resList) == 1) {
               orderBy <- ranksOf <- 1
               l <- data.frame(resList)
+              names(l) <- ifelse(is.null(names(resList)), "", names(resList)) 
             } else {
               l <- .sigAllMethods(resList)
             }
 
-            index <- order(l[, orderBy])
+            index <- order(l[, orderBy], decreasing = decreasing)
             l <- l[index, , drop = FALSE]
-            rr <- rank(l[, ranksOf], ties = "first")
+
+            if(decreasing)
+              rr <- rank(-l[, ranksOf], ties = "first")
+            else
+              rr <- rank(l[, ranksOf], ties = "first")
+
             whichTerms <- rownames(l)[1:topNodes]
             l <- l[whichTerms, , drop = FALSE]
             rr <- as.integer(rr[1:topNodes])
@@ -415,12 +415,12 @@ setMethod("GenTable",
               colnames(rr) <- paste("Rank in ", ifelse(is.character(ranksOf), ranksOf, colnames(l)[ranksOf]), sep = "")
 
               infoMat <- data.frame(infoMat, annoStat, rr,
-                                    apply(l, 2, format.pval, dig = 2, eps = 1e-30),
+                                    apply(l, 2, format.FUN, dig = 2, eps = 1e-30),
                                     check.names = FALSE, stringsAsFactors = FALSE)
 
             } else {
               infoMat <- data.frame(infoMat, annoStat,
-                                    apply(l, 2, format.pval, dig = 2, eps = 1e-30),
+                                    apply(l, 2, format.FUN, dig = 2, eps = 1e-30),
                                     check.names = FALSE, stringsAsFactors = FALSE)
             }
             
@@ -429,7 +429,6 @@ setMethod("GenTable",
             
             return(infoMat)            
           })
-
 
 
 ## if(!isGeneric("genLatexTable"))
@@ -491,7 +490,7 @@ getPvalues <- function(edata, classlabel, test = "t",
 ## a <= b 
 .sigRatio.ratio <- function(a, b, tolerance = 1e-50) {
   
-  ## if a and b are almost equal we return 1
+  ## if a and b are almost equal we return 2
   if(identical(all.equal(a, b, tolerance = tolerance), TRUE))
     return(2)
   
@@ -518,13 +517,13 @@ getPvalues <- function(edata, classlabel, test = "t",
 ## a <= b 
 .sigRatio.01 <- function(a, b, tolerance = 1e-50) {
   
-  ## if a and b are almost equal we return 1
+  ## if a and b are almost equal we return 2
   if(identical(all.equal(a, b, tolerance = tolerance), TRUE))
     return(2)
   
   if(a < b)
     return(1e50)
   
-  return(1)
+  return(2)
 }
 

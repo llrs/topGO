@@ -1,16 +1,25 @@
 \name{getSigGroups}
 
 \alias{getSigGroups}
-\alias{run}
+\alias{runTest}
 
 \alias{getSigGroups-methods}
 \alias{getSigGroups,topGOdata,classicCount-method}
 \alias{getSigGroups,topGOdata,classicScore-method}
+\alias{getSigGroups,topGOdata,classicExpr-method}
 \alias{getSigGroups,topGOdata,elimCount-method}
 \alias{getSigGroups,topGOdata,elimScore-method}
+\alias{getSigGroups,topGOdata,elimExpr-method}
 \alias{getSigGroups,topGOdata,weightCount-method}
+\alias{getSigGroups,topGOdata,removeCount-method}
+\alias{getSigGroups,topGOdata,removeScore-method}
+\alias{getSigGroups,topGOdata,removeExpr-method}
+\alias{getSigGroups,topGOdata,parentChild-method}
+\alias{getSigGroups,topGOdata,pC-method}
 
-\alias{run,topGOdata,character,character-method}
+\alias{runTest,topGOdata,character,character-method}
+\alias{runTest,topGOdata,missing,character-method}
+
 
 %- Also NEED an '\alias' for EACH other topic documented here.
 

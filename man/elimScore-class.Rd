@@ -2,6 +2,7 @@
 \docType{class}
 
 \alias{elimScore-class}
+\alias{removeScore-class}
 
 \alias{allMembers,elimScore-method}
 
@@ -26,8 +27,22 @@
 
 \alias{initialize,elimScore-method}
 
+\alias{allMembers,removeScore-method}
+\alias{allScore,removeScore,missing-method}
+\alias{allScore,removeScore,logical-method}
+\alias{elim<-,removeScore-method}
+\alias{elim,removeScore-method}
+\alias{initialize,removeScore-method}
+\alias{members,removeScore-method}
+\alias{membersScore,removeScore-method}
+\alias{numAllMembers,removeScore-method}
+\alias{numMembers,removeScore-method}
+\alias{rankMembers,removeScore-method}
 
-\title{Class "elimScore"}
+
+
+
+\title{Classes "elimScore" and "removeScore" }
 \description{	 ~~ A concise (1-5 lines) description of what the class is.  ~~}
 
 

@@ -42,10 +42,10 @@
 }
 
 \section{Methods}{
-
-}
-
-
+  \describe{
+    
+    \item{\code{score}:}{ ~~describe this method here }
+}}
 
 
 \author{Adrian Alexa}

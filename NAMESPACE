@@ -1,15 +1,15 @@
 import(Biobase)
+import(AnnotationDbi)
 import(methods)
 import(graph)
 import(SparseM)
 
-importClassesFrom(AnnotationDbi, GOTerms)
-importMethodsFrom(AnnotationDbi, Term, Ontology)
 
 exportClasses(topGOdata, topGOresult, groupStats,
-              classicCount, classicScore,
-              elimCount, elimScore,
-              weightCount, weightScore)
+              classicCount, classicScore, classicExpr,
+              removeCount, removeScore, removeExpr,
+              elimCount, elimScore, elimExpr,
+              weightCount, pC, parentChild)
 
 exportMethods(initialize, description, ontology, allGenes, feasible, graph,
               geneSelectionFun, "description<-", "ontology<-", "feasible<-", "graph<-",
@@ -19,16 +19,17 @@ exportMethods(initialize, description, ontology, allGenes, feasible, graph,
               allMembers, Name, members, testStatistic, "Name<-", "allMembers<-",
               "members<-", numMembers, numAllMembers, runTest, "sigMembers<-",
               sigAllMembers, numSigAll, sigMembers, numSigMembers, contTable, allScore,
-              membersScore, "score<-", rankMembers, getSigGroups, genTable, GenTable,
-              elim, cutOff, "elim<-", "cutOff<-", updateGroup, "Weights<-",
-              Weights, "sigRatio<-", getSigRatio, score, testName, testClass,
+              membersScore, "score<-", rankMembers, pType, "pType<-", 
+              membersExpr, getSigGroups, elim, cutOff, "elim<-", "cutOff<-", updateGroup,
+              "Weights<-", Weights, "sigRatio<-", getSigRatio, score, testName, testClass,
               "score<-", "testName<-", "testClass<-", printGenes, penalise,
-              scoreOrder, testStatPar, printGraph, run,
-              GOFisherTest, GOKSTest, GOtTest,
+              scoreOrder, testStatPar, printGraph, GenTable,
+              GOFisherTest, GOKSTest, GOtTest, GOglobalTest,
+              joinFun, allParents,
               expressionMatrix, phenotype)
 
-export(GOplot, showSigOfNodes, getPvalues, groupGOTerms,
-       annFUN.hgu, annFUN.gene2GO, annFUN.GO2genes,
+export(annFUN.db, annFUN, annFUN.gene2GO, annFUN.GO2genes,
+       GOplot, showSigOfNodes, getPvalues, groupGOTerms,
        reverseArch, getGraphRoot, buildGOgraph.topology, inducedGraph, buildLevels,
        getNoOfLevels, mapGenes2GOgraph, .sigAllMethods, 
        .getFromNode, .genesInNode, .countsInNode, .writeToNodes)

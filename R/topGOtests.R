@@ -17,6 +17,7 @@ setMethod("GOFisherTest", "classicCount",
           })
 
 
+
 if(!isGeneric("GOKSTest"))
   setGeneric("GOKSTest", function(object) standardGeneric("GOKSTest"))
                                
@@ -35,6 +36,7 @@ setMethod("GOKSTest", "classicScore",
 
             return(ks.test(x.a, x.b, alternative = "greater")$p.value)
           })
+
 
 
 if(!isGeneric("GOtTest"))
@@ -76,4 +78,19 @@ setMethod("GOtTest", "classicScore",
             
             return(p.value)
           })
+
+
+
+if(!isGeneric("GOglobalTest"))
+  setGeneric("GOglobalTest", function(object) standardGeneric("GOglobalTest"))
+                               
+setMethod("GOglobalTest", "classicExpr",
+          function(object) {
+            
+            if(numMembers(object) == 0)
+              return(1)
+
+            return(p.value(globaltest(X = membersExpr(object), Y = pType(object))))
+          })
+
 

@@ -21,6 +21,8 @@ setMethod("initialize", "topGOdata",
                    expressionMatrix = NULL,     #!
                    ## phenotype information     #!
                    phenotype = NULL,            #!
+                   ## minimum node size
+                   nodeSize = 0,
                    ## annotation function
                    annotationFun,
                    ## additional parameters for the annotationFun
@@ -57,9 +59,12 @@ setMethod("initialize", "topGOdata",
                 warning("No function to select the significant genes provided!")
               .Object@geneSelectionFun <- geneSelectionFun
             }
-            
+
+            ## size of the nodes which will be pruned
+            .Object@nodeSize = as.integer(nodeSize)
+
             ## loading some required libraries 
-            require('GO') || stop('package GO is required')
+            require('GO.db') || stop('package GO.db is required')
 
             ## this function is returning a list of GO terms from the specified ontology
             ## whith each entry being a vector of genes
@@ -69,7 +74,7 @@ setMethod("initialize", "topGOdata",
             
             ## the the GO graph is build started from the most specific terms
             cat("\nBuild GO DAG topology ..........")
-            g <- buildGOgraph.topology(mostSpecificGOs, ontology)
+            g <- buildGOgraph.topology(names(mostSpecificGOs), ontology)
             cat("\t(",  numNodes(g), "GO terms and", numEdges(g), "relations. )\n")
                 
             ## probably is good to store the leves but for the moment we don't 
@@ -85,10 +90,9 @@ setMethod("initialize", "topGOdata",
             cat("\t(", length(feasibleGenes), "genes annotated to the GO terms. )\n")
 
             .Object@feasible <- .Object@allGenes %in% feasibleGenes
-            .Object@graph <- g
             
-            ## some clean-up
-            ##detach(pos = which(search() == "package:GO"))
+            cc <- .countsInNode(g, nodes(g))
+            .Object@graph <- subGraph(names(cc)[cc >= .Object@nodeSize], g)
             
             .Object
           })
@@ -139,8 +143,18 @@ setMethod("feasible", "topGOdata", function(object) object@feasible)
 
 if(!isGeneric("graph"))
   setGeneric("graph", function(object) standardGeneric("graph"))
-                               
+
 setMethod("graph", "topGOdata", function(object) object@graph)
+
+## we take care of the nodes with fewer than "nodeSize" genes
+##setMethod("graph", "topGOdata",
+##           function(object) {
+##             if(object@nodeSize > 0) {
+##               cc <- .countsInNode(object@graph, nodes(object@graph))
+##               return(subGraph(names(cc)[cc >= object@nodeSize], object@graph))
+##             }
+##             object@graph
+##           })
 
 if(!isGeneric("geneSelectionFun"))
   setGeneric("geneSelectionFun", function(object) standardGeneric("geneSelectionFun"))
@@ -334,6 +348,7 @@ setMethod("numSigGenes", "topGOdata",
 
 
 ############## methods to access the information on GO terms ##############
+## we should exclusively use graph(object) to access the graph
 
 if(!isGeneric("usedGO"))
   setGeneric("usedGO", function(object) standardGeneric("usedGO"))
@@ -440,9 +455,7 @@ setMethod("termStat",
 
 setMethod("termStat", 
           signature(object = "topGOdata", whichGO = "missing"),
-          function(object) {
-            termStat(object, nodes(graph(object)))
-          })
+          function(object) termStat(object, nodes(graph(object))))
 
 
 
@@ -453,7 +466,9 @@ if(!isGeneric("updateTerm<-"))
 setMethod("updateTerm<-", 
           signature(object = "topGOdata", attr = "character", value = "ANY"),
           function(object, attr, value) {
-            object@graph <- .writeToNodes(graph(object), attr, value)
+            ## we need to update the full graph ....
+            ## object@graph <- .writeToNodes(graph(object), attr, value)
+            object@graph <- .writeToNodes(object@graph, attr, value)
             object
           })
 
@@ -495,10 +510,11 @@ setMethod("show", "topGOdata", function(object) .printTopGOdata(x = object))
   }
   cat("   -", numSigGenes(x), " significant genes. \n")
 
-  cat("\n GO graph:\n")
-  cat("   - a graph with", edgemode(x@graph), "edges\n")
-  cat("   - number of nodes =", numNodes(x@graph), "\n")
-  cat("   - number of edges =", numEdges(x@graph), "\n")
+  cat("\n GO graph (nodes with at least ", x@nodeSize, " genes):\n")
+  gg <- graph(x)
+  cat("   - a graph with", edgemode(gg), "edges\n")
+  cat("   - number of nodes =", numNodes(gg), "\n")
+  cat("   - number of edges =", numEdges(gg), "\n")
   
   ##cat("\n Signif. genes sellection:\n\n")
   ##print(x@geneSelectionFun)
@@ -513,6 +529,8 @@ setMethod("show", "topGOdata", function(object) .printTopGOdata(x = object))
 
 
 ######################################################################
+######################################################################
+
 
 ######################## topGOresult methods ########################
 
@@ -574,17 +592,21 @@ setMethod("testClass<-", "topGOresult", function(object, value) {object@testClas
 
 
 
+
 ######################################################################
+######################################################################
+
+
 
 ######################## groupInfo methods ########################
 
 setMethod("initialize", "groupStats",
-          function(.Object, testStatistic, name, allMembers, groupMembers, testStatPar) {
+          function(.Object, testStatistic, name, allMembers, groupMembers) {
             .Object@name <- name
             .Object@allMembers <- allMembers
             .Object@members <- groupMembers
             .Object@testStatistic <- testStatistic
-            .Object@testStatPar <- testStatPar
+            ##.Object@testStatPar <- testStatPar
             
             .Object
           })
@@ -650,9 +672,10 @@ setMethod("numAllMembers", "groupStats", function(object) length(object@allMembe
 
 ## MAIN function -- it should return the "p-value" of the Test Satatistic
 if(!isGeneric("runTest"))
-  setGeneric("runTest", function(object) standardGeneric("runTest"))
+  setGeneric("runTest", function(object, algorithm, statistic, ...) standardGeneric("runTest"))
                                
-setMethod("runTest", "groupStats",
+setMethod("runTest",
+          signature(object = "groupStats", algorithm = "missing", statistic = "missing"),
           function(object) object@testStatistic(object))
 
 
@@ -670,6 +693,11 @@ setMethod("updateGroup",
           })
 
 
+
+######################################################################
+######################################################################
+
+
 #################### classicCount methods ####################
 
 #################### constructor ####################
@@ -681,9 +709,10 @@ setMethod("initialize", "classicCount",
                    groupMembers = character(),
                    sigMembers = character(),
                    ...) {
-            .Object <- callNextMethod(.Object, testStatistic, name, allMembers,
-                                      groupMembers, testStatPar = list(...))
+            .Object <- callNextMethod(.Object, testStatistic, name,
+                                      allMembers, groupMembers)
             .Object@significant <- which(allMembers %in% sigMembers)
+            .Object@testStatPar = list(...)
 
             .Object
           })
@@ -765,11 +794,13 @@ setMethod("initialize", "classicScore",
             if(length(allMembers) != length(score))
               warning("score length don't match.")
             
-            .Object <- callNextMethod(.Object, testStatistic, name, allMembers[index],
-                                      groupMembers, testStatPar = list(...))
+            .Object <- callNextMethod(.Object, testStatistic, name,
+                                      allMembers[index], groupMembers)
             
             .Object@score <- as.numeric(score)[index]
             .Object@scoreOrder <- scoreOrder
+            .Object@testStatPar = list(...)
+
             .Object
           })
 
@@ -846,8 +877,287 @@ setMethod("rankMembers", "classicScore",
 
 
 
+#################### classicExpr methods ####################
+
+#################### constructor ####################
+setMethod("initialize", "classicExpr",
+          function(.Object,
+                   testStatistic,
+                   name = character(),
+                   ## allMembers = character(), ## this should be given in the eData matrix
+                   groupMembers = character(),
+                   exprDat,
+                   pType = factor(),
+                   ...) {
+
+            if(missing(exprDat)) {
+              allMembers <- character()
+              e <- emptyenv()
+            }
+            else {
+              if(class(exprDat) != "matrix")
+                error("exprDat must be of type matrix")              
+
+              allMembers <- rownames(exprDat)
+              e <- new.env(hash = TRUE, parent = emptyenv())
+              rownames(exprDat) <- NULL
+              assign("expresMatrix", exprDat, envir = e)
+            }
+
+            .Object <- callNextMethod(.Object, testStatistic, name,
+                                      allMembers, groupMembers)
+
+            .Object@pType <- pType
+            .Object@eData <- e
+            .Object@testStatPar = list(...)
+            
+            .Object
+          })
+
+
+if(!isGeneric("pType<-"))
+  setGeneric("pType<-", function(object, value) standardGeneric("pType<-"))
+                               
+setMethod("pType<-", "classicExpr", function(object, value) {object@pType <- value; object})
+
+if(!isGeneric("pType")) 
+  setGeneric("pType", function(object) standardGeneric("pType"))
+
+## this is for the simple case in which the pType is a vector!
+setMethod("pType", "classicExpr", function(object) object@pType)
+
+setMethod("allMembers<-", "classicExpr",
+           function(object, value) {warning("Assignmanet not allowed"); object})
+
+if(!isGeneric("emptyExpr")) 
+  setGeneric("emptyExpr", function(object) standardGeneric("emptyExpr"))
+
+setMethod("emptyExpr", "classicExpr",
+          function(object) return(environmentName(object@eData) == "R_EmptyEnv"))
+
+if(!isGeneric("membersExpr")) 
+  setGeneric("membersExpr", function(object) standardGeneric("membersExpr"))
+                               
+setMethod("membersExpr", "classicExpr", function(object)
+          get("expresMatrix", envir = object@eData)[object@allMembers %in% members(object), , drop = FALSE])
+
+
+
+######################################################################
 ######################################################################
 
+
+#################### removeCount methods ####################
+
+#################### constructor ####################
+setMethod("initialize", "removeCount",
+          function(.Object,
+                   testStatistic,
+                   name = character(),
+                   allMembers = character(),
+                   groupMembers = character(),
+                   sigMembers = character(),
+                   elim = integer(),
+                   ...) {
+            .Object <- callNextMethod(.Object, testStatistic, name,
+                                      allMembers, groupMembers,
+                                      sigMembers)
+
+            .Object@elim <- which(.Object@members %in% elim)
+            .Object@testStatPar = list(...)
+            
+            .Object
+          })
+
+if(!isGeneric("elim<-"))
+  setGeneric("elim<-", function(object, value) standardGeneric("elim<-"))
+                               
+setMethod("elim<-", "removeCount",
+          function(object, value) {
+            object@elim <- which(object@members %in% value)
+            object
+          })
+
+if(!isGeneric("elim")) 
+  setGeneric("elim", function(object) standardGeneric("elim"))
+                               
+setMethod("elim", "removeCount",
+          function(object) object@members[object@elim])
+
+## account for the eliminated members
+#TODO:
+
+setMethod("numMembers", "removeCount",
+          function(object) length(object@members) - length(object@elim))
+
+setMethod("numAllMembers", "removeCount",
+          function(object) length(object@allMembers) - length(object@elim))
+
+setMethod("sigAllMembers", "removeCount",
+          function(object) setdiff(object@allMembers[object@significant], elim(object)))
+          
+setMethod("numSigAll", "removeCount",
+          function(object) length(sigAllMembers(object)))
+
+setMethod("sigMembers", "removeCount",
+          function(object) intersect(sigAllMembers(object), members(object)))
+
+setMethod("numSigMembers", "removeCount",
+          function(object) length(sigMembers(object)))
+
+
+
+
+
+#################### removeScore methods ####################
+
+#################### constructor ####################
+setMethod("initialize", "removeScore",
+          function(.Object,
+                   testStatistic,
+                   name = character(),
+                   allMembers = character(),
+                   groupMembers = character(),
+                   score = numeric(),
+                   scoreOrder = "increasing",
+                   elim = integer(),
+                   ...) {
+            .Object <- callNextMethod(.Object, testStatistic, name,
+                                      allMembers, groupMembers, score,
+                                      scoreOrder)
+
+            .Object@elim <- which(.Object@members %in% elim)
+            .Object@testStatPar = list(...)
+
+            .Object
+          })
+
+setMethod("elim<-", "removeScore",
+          function(object, value) {
+            object@elim <- which(object@members %in% value)
+            object
+          })
+
+setMethod("elim", "removeScore", function(object) object@members[object@elim])
+
+setMethod("members", "removeScore",
+          function(object) {
+            if(length(object@elim) == 0)
+              return(object@members)
+
+            return(object@members[-object@elim])
+          })
+
+setMethod("allMembers", "removeScore",
+          function(object) object@allMembers[!(object@allMembers %in% elim(object))])
+
+setMethod("numMembers", "removeScore",
+          function(object) length(object@members) - length(object@elim))
+
+setMethod("numAllMembers", "removeScore",
+          function(object) length(object@allMembers) - length(object@elim))
+
+setMethod("allScore",
+          signature(object = "removeScore", use.names = "missing"),
+          function(object) {
+            ret.val <- object@score
+            index <- !(object@allMembers %in% elim(object))
+
+            return(ret.val[index])
+          })
+
+setMethod("allScore",
+          signature(object = "removeScore", use.names = "logical"),
+          function(object, use.names = FALSE) {
+            ret.val <- object@score
+            index <- !(object@allMembers %in% elim(object))
+            
+            if(use.names)
+              names(ret.val) <- object@allMembers
+            
+            return(ret.val[index])
+          })
+
+setMethod("membersScore", "removeScore",
+          function(object) {
+            ## since members(object) has the eliminated members removed
+            index <- object@allMembers %in% members(object)
+
+            ss <- object@score[index]
+            names(ss) <- object@allMembers[index]
+
+            ## just to be safe of the order
+            return(ss[members(object)])
+          })
+
+
+setMethod("rankMembers", "removeScore",
+          function(object) {
+            ## NEED to use methods allMembers and members since they accont for removed members
+            return(which(allMembers(object) %in% members(object)))
+          })
+
+
+
+
+#################### removeExpr methods ####################
+
+#################### constructor ####################
+setMethod("initialize", "removeExpr",
+          function(.Object,
+                   testStatistic,
+                   name = character(),
+                   groupMembers = character(),
+                   exprDat,
+                   pType = factor(),
+                   elim = integer(),
+                   ...) {
+            .Object <- callNextMethod(.Object, testStatistic, name,
+                                      groupMembers, exprDat, pType)
+
+            .Object@elim <- which(.Object@members %in% elim)
+            .Object@testStatPar = list(...)
+
+            .Object
+          })
+
+if(!isGeneric("elim<-"))
+  setGeneric("elim<-", function(object, value) standardGeneric("elim<-"))
+                               
+setMethod("elim<-", "removeExpr",
+          function(object, value) {
+            object@elim <- which(object@members %in% value)
+            object
+          })
+
+if(!isGeneric("elim")) 
+  setGeneric("elim", function(object) standardGeneric("elim"))
+                               
+setMethod("elim", "removeExpr",
+          function(object) object@members[object@elim])
+
+## probably not a good idea ....
+setMethod("members", "removeExpr",
+          function(object) {
+            if(length(object@elim) == 0)
+              return(object@members)
+
+            return(object@members[-object@elim])
+          })
+
+setMethod("allMembers", "removeExpr",
+          function(object) callNextMethod(object)[!(callNextMethod(object) %in% elim(object))])
+
+setMethod("numMembers", "removeExpr",
+          function(object) length(object@members) - length(object@elim))
+
+setMethod("numAllMembers", "removeExpr",
+          function(object) length(object@allMembers) - length(object@elim))
+
+
+
+######################################################################
+######################################################################
 
 
 
@@ -862,26 +1172,16 @@ setMethod("initialize", "elimCount",
                    allMembers = character(),
                    groupMembers = character(),
                    sigMembers = character(),
-                   elim = character(),
+                   elim = integer(),
                    cutOff = 0.01,
                    ...) {
             .Object <- callNextMethod(.Object, testStatistic, name,
                                       allMembers, groupMembers,
-                                      sigMembers, testStatPar = list(...))
-
-            .Object@elim <- which(.Object@members %in% elim)
+                                      sigMembers, elim = elim)
             .Object@cutOff <- cutOff
+            .Object@testStatPar = list(...)
 
             .Object
-          })
-
-if(!isGeneric("elim<-"))
-  setGeneric("elim<-", function(object, value) standardGeneric("elim<-"))
-                               
-setMethod("elim<-", "elimCount",
-          function(object, value) {
-            object@elim <- which(object@members %in% value)
-            object
           })
 
 if(!isGeneric("cutOff<-"))
@@ -896,35 +1196,6 @@ if(!isGeneric("cutOff"))
                                
 setMethod("cutOff", "elimCount", function(object) object@cutOff)
 
-if(!isGeneric("elim")) 
-  setGeneric("elim", function(object) standardGeneric("elim"))
-                               
-setMethod("elim", "elimCount",
-          function(object) object@members[object@elim])
-
-## account for the eliminated members
-#TODO:
-
-setMethod("numMembers", "elimCount",
-          function(object) length(object@members) - length(object@elim))
-
-setMethod("numAllMembers", "elimCount",
-          function(object) length(object@allMembers) - length(object@elim))
-
-setMethod("sigAllMembers", "elimCount",
-          function(object) setdiff(object@allMembers[object@significant], elim(object)))
-          
-setMethod("numSigAll", "elimCount",
-          function(object) length(sigAllMembers(object)))
-
-setMethod("sigMembers", "elimCount",
-          function(object) intersect(sigAllMembers(object), members(object)))
-
-setMethod("numSigMembers", "elimCount",
-          function(object) length(sigMembers(object)))
-
-
-
 
 
 #################### elimScore methods ####################
@@ -938,91 +1209,56 @@ setMethod("initialize", "elimScore",
                    groupMembers = character(),
                    score = numeric(),
                    scoreOrder = "increasing",
-                   elim = character(),
+                   elim = integer(),
                    cutOff = 0.01,
                    ...) {
             .Object <- callNextMethod(.Object, testStatistic, name,
                                       allMembers, groupMembers, score,
-                                      scoreOrder, testStatPar = list(...))
-
-            .Object@elim <- which(.Object@members %in% elim)
+                                      scoreOrder, elim = elim)
             .Object@cutOff <- cutOff
+            .Object@testStatPar = list(...)
 
             .Object
-          })
-
-setMethod("elim<-", "elimScore",
-          function(object, value) {
-            object@elim <- which(object@members %in% value)
-            object
           })
 
 setMethod("cutOff<-", "elimScore",
           function(object, value)  {object@cutOff <- value; object})
 
-
 setMethod("cutOff", "elimScore", function(object) object@cutOff)
-                               
-setMethod("elim", "elimScore", function(object) object@members[object@elim])
 
-setMethod("members", "elimScore",
-          function(object) {
-            if(length(object@elim) == 0)
-              return(object@members)
 
-            return(object@members[-object@elim])
+
+#################### elimExpr methods ####################
+
+#################### constructor ####################
+setMethod("initialize", "elimExpr",
+          function(.Object,
+                   testStatistic,
+                   name = character(),
+                   groupMembers = character(),
+                   exprDat,
+                   pType = factor(),
+                   elim = integer(),
+                   cutOff = 0.01,
+                   ...) {
+            .Object <- callNextMethod(.Object, testStatistic, name,
+                                      groupMembers, exprDat, pType,
+                                      elim = elim)
+            .Object@cutOff <- cutOff
+            .Object@testStatPar = list(...)
+
+            .Object
           })
 
-setMethod("allMembers", "elimScore",
-          function(object) object@allMembers[!(object@allMembers %in% elim(object))])
+setMethod("cutOff<-", "elimExpr",
+          function(object, value)  {object@cutOff <- value; object})
 
-setMethod("numMembers", "elimScore",
-          function(object) length(object@members) - length(object@elim))
-
-setMethod("numAllMembers", "elimScore",
-          function(object) length(object@allMembers) - length(object@elim))
-
-setMethod("allScore",
-          signature(object = "elimScore", use.names = "missing"),
-          function(object) {
-            ret.val <- object@score
-            index <- !(object@allMembers %in% elim(object))
-
-            return(ret.val[index])
-          })
-
-setMethod("allScore",
-          signature(object = "elimScore", use.names = "logical"),
-          function(object, use.names = FALSE) {
-            ret.val <- object@score
-            index <- !(object@allMembers %in% elim(object))
-            
-            if(use.names)
-              names(ret.val) <- object@allMembers
-            
-            return(ret.val[index])
-          })
-
-setMethod("membersScore", "elimScore",
-          function(object) {
-            ## since members(object) has the eliminated members removed
-            index <- object@allMembers %in% members(object)
-
-            ss <- object@score[index]
-            names(ss) <- object@allMembers[index]
-
-            ## just to be safe of the order
-            return(ss[members(object)])
-          })
+setMethod("cutOff", "elimExpr", function(object) object@cutOff)
 
 
-setMethod("rankMembers", "elimScore",
-          function(object) {
-            ## NEED to use methods allMembers and members since they accont for removed members
-            return(which(allMembers(object) %in% members(object)))
-          })
 
-
+######################################################################
+######################################################################
 
 
 
@@ -1043,8 +1279,7 @@ setMethod("initialize", "weightCount",
 
             .Object <- callNextMethod(.Object, testStatistic,
                                       paste(name, sigRatio, sep = " : "),
-                                      allMembers, groupMembers,
-                                      sigMembers, testStatPar = list(...))
+                                      allMembers, groupMembers, sigMembers)
 
             if(length(weights) == 0)
               .Object@weights <- numeric()
@@ -1069,7 +1304,8 @@ setMethod("initialize", "weightCount",
               .Object@penalise <- function(a, b) return(1)
           
             .Object@roundFun <- floor
-            
+            .Object@testStatPar = list(...)
+
             .Object
           })
 
@@ -1177,4 +1413,206 @@ setMethod("numSigMembers", "weightCount",
           function(object) {
             ## sum the weights of the group members which are sig.
             return(object@roundFun(sum(object@weights[object@members %in% sigAllMembers(object)])))
+          })
+
+
+
+######################################################################
+######################################################################
+
+#################### parentChild methods ####################
+
+#################### constructor ####################
+setMethod("initialize", "parentChild",
+          function(.Object,
+                   testStatistic,
+                   name = character(),
+                   groupMembers = character(),
+                   parents, ## should be a list
+                   sigMembers = character(),
+                   joinFun = c("union", "intersect"),
+                   ...) {
+
+            if(missing(parents)) {
+              allMembers <- character()
+              splitIndex <- integer()
+              ## no use to have significant members if we don't
+              ## know all the members
+              sigMembers <- integer()
+            }
+            else {
+              splitIndex <- sapply(parents, length)
+              allMembers <- unlist(parents, use.names = FALSE)
+              ## if some elements of sigMembers are not in allMembers
+              sigMembers <- match(sigMembers, allMembers)
+              sigMembers <- sigMembers[!is.na(sigMembers)]
+            }
+            
+            .Object <- callNextMethod(.Object, testStatistic = testStatistic,
+                                      name = name, allMembers = allMembers,
+                                      groupMembers = groupMembers)
+
+            .Object@joinFun <- match.arg(joinFun) 
+            .Object@significant <- sigMembers
+            .Object@splitIndex <- splitIndex
+            .Object@testStatPar = list(...)
+
+            .Object
+          })
+
+
+if(!isGeneric("joinFun")) 
+  setGeneric("joinFun", function(object) standardGeneric("joinFun"))
+                               
+setMethod("joinFun", "parentChild", function(object) object@joinFun)
+
+
+## the main function is "allMembers"
+## it selects the "parent" members depending on the joinFun function
+setMethod("allMembers", "parentChild",
+          function(object) {
+            if(joinFun(object) == "union")
+              return(unique(object@allMembers))
+
+            ## split the vector into a list
+            ss <- rep(1:length(object@splitIndex), times = object@splitIndex)
+            l <- split(object@allMembers, ss)
+
+            ## works for a list with at least one element
+            res <- l[[1]]
+            for(s in l[-1]) res <- intersect(s, res)
+
+            return(res)
+          })
+
+
+if(!isGeneric("allParents")) 
+  setGeneric("allParents", function(object) standardGeneric("allParents"))
+                               
+setMethod("allParents", "parentChild",
+          function(object) {
+            ## split the vector into a list
+            ss <- rep(1:length(object@splitIndex), times = object@splitIndex)
+            l <- object@allMembers
+            names(l) <- names(ss)
+            return(l)
+          })
+
+## needs to be redifined such that it accounts for the joinFun 
+setMethod("numAllMembers", "parentChild", function(object) length(allMembers(object)))
+
+setMethod("sigAllMembers", "parentChild",
+          function(object) intersect(object@allMembers[object@significant], allMembers(object)))
+          
+setMethod("numSigAll", "parentChild",
+          function(object) length(sigAllMembers(object)))
+          
+
+setMethod("sigMembers<-", "parentChild",
+          function(object, value) {
+            sig <- match(value, object@allMembers)
+            object@significant <- sig[!is.na(sig)]
+            object
+          })
+
+setMethod("allMembers<-", "parentChild",
+          function(object, value) {warning("Assignmanet not allowed"); object})
+
+setMethod("updateGroup",
+          signature(object = "parentChild", name = "missing", members = "character"),
+          function(object, members, parents, sigMembers) {
+            
+            object@splitIndex <- sapply(parents, length)
+            object@allMembers <- unlist(parents, use.names = FALSE)
+            
+            sigMembers <- match(sigMembers, object@allMembers)
+            object@significant <- sigMembers[!is.na(sigMembers)]
+
+            object@members <- members
+            
+            return(object)
+          })
+
+
+
+
+
+#################### pC methods ####################
+
+#################### constructor ####################
+setMethod("initialize", "pC",
+          function(.Object,
+                   testStatistic,
+                   name = character(),
+                   groupMembers = character(),
+                   parents, ## should be a list
+                   sigMembers = character(),
+                   joinFun = c("union", "intersect"),
+                   ...) {
+
+            joinFun <- match.arg(joinFun)
+            name <- paste(name, paste("joinFun = ", joinFun, sep = ""), sep = " : ")
+            
+            joinFun <- switch(joinFun,
+                              "union" = get("union"),
+                              "intersect" = get("intersect"))
+            
+            if(missing(parents)) {
+              allMembers <- character()
+              sigMembers <- integer()
+            }
+            else {
+              ## works for a list with at least one element
+              allMembers <- parents[[1]]
+              for(s in parents[-1]) allMembers <- joinFun(s, allMembers)
+              ## if some elements of sigMembers are not in allMembers
+              sigMembers <- which(allMembers %in% sigMembers)
+            }
+            
+            .Object <- callNextMethod(.Object, testStatistic = testStatistic,
+                                      name = name, allMembers = allMembers,
+                                      groupMembers = groupMembers)
+
+            .Object@joinFun <- joinFun
+            .Object@significant <- sigMembers
+            .Object@testStatPar = list(...)
+
+            .Object
+          })
+
+
+setMethod("sigMembers<-", "pC",
+          function(object, value) {warning("Assignmanet not allowed"); object})
+
+setMethod("allMembers<-", "pC",
+          function(object, value) {warning("Assignmanet not allowed"); object})
+
+setMethod("updateGroup",
+          signature(object = "pC", name = "missing", members = "character"),
+          function(object, members, parents, sigMembers) {
+            
+            ## works for a list with at least one element
+            allMembers <- parents[[1]]
+            for(s in parents[-1])
+              allMembers <- object@joinFun(s, allMembers)
+            
+            object@significant <- which(allMembers %in% sigMembers)
+            object@allMembers <- allMembers
+            object@members <- members
+            
+            return(object)
+          })
+
+setMethod("updateGroup",
+          signature(object = "pC", name = "missing", members = "missing"),
+          function(object, parents, sigMembers) {
+
+            allMembers <- parents[[1]]
+            for(s in parents[-1])
+              allMembers <- object@joinFun(s, allMembers)
+            
+            object@significant <- which(allMembers %in% sigMembers)
+            object@allMembers <- allMembers
+            
+            return(object)
           })

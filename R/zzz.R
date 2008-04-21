@@ -6,6 +6,4 @@
   ## some preprocessing
   where <- match(paste("package:", pkg, sep=""), search())
   groupGOTerms(where)
-
-  ##assign(".LOG.FILE", NULL, envir = as.environment(where))
 }
