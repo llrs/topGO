@@ -30,6 +30,7 @@ exportMethods(initialize, description, ontology, allGenes, feasible, graph,
 
 export(annFUN.db, annFUN, annFUN.gene2GO, annFUN.GO2genes,
        GOplot, showSigOfNodes, getPvalues, groupGOTerms,
-       reverseArch, getGraphRoot, buildGOgraph.topology, inducedGraph, buildLevels,
+       reverseArch, getGraphRoot, buildGOgraph.topology,
+       nodesInInducedGraph, inducedGraph, buildLevels,
        getNoOfLevels, mapGenes2GOgraph, .sigAllMethods, 
        .getFromNode, .genesInNode, .countsInNode, .writeToNodes)

@@ -143,6 +143,52 @@ buildGOgraph.topology <- function(knownNodes, whichOnto = "BP") {
 inducedGraph <- function(dag,
                          startNodes) {
 
+  return(subGraph(nodesInInducedGraph(dag, startNodes), dag))
+}
+
+
+############################   nodesInInducedGraph   ############################
+## Given a GO term (or a list of GO terms) this function is returning
+## the nodes in the subgraph induced by node.
+
+nodesInInducedGraph <- function(dag,
+                                 startNodes) {
+  
+  ## build a lookUp table with the nodes in the graph
+  nodeLookUp <- new.env(hash = T, parent = emptyenv())
+  
+  nodesDAG <- dag@nodes
+
+  ## recursivly build the list of induced nodes
+  buildInducedGraph <- function(node) {
+    ## if we have visited the node, there is nothing to do
+    if(exists(node, envir = nodeLookUp, mode = 'logical', inherits = FALSE))
+      return(1)
+    
+    ## we put the node in the graph and we get his parents
+    assign(node, TRUE, envir = nodeLookUp)
+                                            
+    adjNodes <- nodesDAG[dag@edgeL[[node]]$edges]
+    
+    if(length(adjNodes) == 0)
+      return(2)
+    
+    for(i in 1:length(adjNodes))
+      buildInducedGraph(adjNodes[i])
+    
+    return(0)
+  }
+
+  ## we start from the specified nodes
+  lapply(startNodes, buildInducedGraph)
+
+  return(ls(nodeLookUp))
+}
+
+
+nodesInInducedGraph2 <- function(dag,
+                                startNodes) {
+  
   ## build a lookUp table with the nodes in the graph
   nodeLookUp <- new.env(hash = T, parent = emptyenv())
 
@@ -179,9 +225,8 @@ inducedGraph <- function(dag,
   ## we start from the specified nodes
   lapply(startNodes, buildInducedGraph)
 
-  return(subGraph(ls(nodeLookUp), dag))
+  return(ls(nodeLookUp))
 }
-
 
 
 ############################    buildLevels    ############################

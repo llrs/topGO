@@ -315,10 +315,10 @@ setMethod("printGenes",
 
 
 .getTermsDefinition <- function(whichTerms, ontology, numChar = 20, multipLines = FALSE) {
-  
-  whichTerms <- paste(paste("'", whichTerms, "'", sep = ""), collapse = ",")
+
+  qTerms <- paste(paste("'", whichTerms, "'", sep = ""), collapse = ",")
   retVal <- dbGetQuery(GO_dbconn(), paste("SELECT term, go_id FROM go_term WHERE ontology IN",
-                                          "('", ontology, "') AND go_id IN (", whichTerms, ");", sep = ""))
+                                          "('", ontology, "') AND go_id IN (", qTerms, ");", sep = ""))
   
   termsNames <- retVal$term
   names(termsNames) <- retVal$go_id
@@ -334,7 +334,7 @@ setMethod("printGenes",
                          })
   
   names(shortNames) <- names(termsNames)
-  return(shortNames)
+  return(shortNames[whichTerms])
 }
 
 
