@@ -16,6 +16,14 @@ colnames(.algoComp) <- c("fisher", "z", "ks", "t", "globaltest", "category")
 .testNames <- c("GOFisherTest" , "GOKSTest", "GOtTest", "GOglobalTest")
 names(.testNames) <- c("fisher", "ks", "t", "globaltest")
 
+## functions to extract the information from the .algoComp
+whichAlgorithms <- function() {
+  rownames(.algoComp)
+}
+
+whichTests <- function() {
+  colnames(.algoComp)[colSums(.algoComp) > 0]
+}
 
 ## function runTest(topGOdata, "elim", "KS", ...)
 ## ... are parameters for the test statistic
@@ -551,7 +559,7 @@ setMethod("getSigGroups",
         elimGenesID <- currAnno[[termID]]
 
         ## we look for the ancestors
-        ancestors <- setdiff(nodes(inducedGraph(goDAG, termID)), termID)
+        ancestors <- setdiff(nodesInInducedGraph(goDAG, termID), termID)
         
         oldElimGenesID <- mget(ancestors, envir = elimGenes.LookUP,
                                mode = 'character', ifnotfound = list(NA))
@@ -748,10 +756,10 @@ setMethod("getSigGroups",
 
       if(!is.null(.gene.weights)) {
         ## get the upper induced subgraph from 'u' (including 'u')
-        upSubgraph <- inducedGraph(goDAG, termID)
+        nodesUpSubgraph <- nodesInInducedGraph(goDAG, termID)
         ## set the weights for all the nodes
         
-        lapply(setdiff(nodes(upSubgraph), termID), setGeneWeights, .gene.weights, upNodes.LookUP)
+        lapply(setdiff(nodesUpSubgraph, termID), setGeneWeights, .gene.weights, upNodes.LookUP)
       }
     }
   }
@@ -970,10 +978,10 @@ setMethod("getSigGroups",
 
       if(!is.null(.gene.weights)) {
         ## get the upper induced subgraph from 'u' (including 'u')
-        upSubgraph <- inducedGraph(goDAG, termID)
+        NodesUpSubgraph <- nodesInInducedGraph(goDAG, termID)
         ## set the weights for all the nodes
 
-        lapply(setdiff(nodes(upSubgraph), termID), setGeneWeights, .gene.weights, upNodes.LookUP)
+        lapply(setdiff(nodesUpSubgraph, termID), setGeneWeights, .gene.weights, upNodes.LookUP)
       }
     }
   }
@@ -995,13 +1003,11 @@ setMethod("getSigGroups",
   
   removeGenes <- function(termID, genesID, LookUP.table) {
     if(!exists(termID, envir = LookUP.table, mode = "character"))
-      aux <- genesID
+      assign(termID, genesID, envir = LookUP.table)
     else
-      aux <- union(genesID, get(termID, envir = LookUP.table))
-
-    assign(termID, aux, envir = LookUP.table)
+      assign(termID, union(genesID, get(termID, envir = LookUP.table)), envir = LookUP.table)
   }
-
+  
   
   ## this is a recursive function in termChildren
   computeTermSig <- function(group.test, termChildren) {
@@ -1104,11 +1110,10 @@ setMethod("getSigGroups",
       computeTermSig(group.test, allChildren[[termID]])
 
       if(!is.null(.genesToRemove)) {
-        ## get the upper induced subgraph from 'u' (including 'u')
-        upSubgraph <- inducedGraph(goDAG, termID)
-
-        ## Eliminate the genes for all upper nodes
-        lapply(setdiff(nodes(upSubgraph), termID), removeGenes, .genesToRemove, upNodes.LookUP)
+        ## get the nodes in the upper induced subgraph from 'u' (including 'u')
+        ## and eliminate the genes for all these nodes
+        lapply(setdiff(nodesInInducedGraph(goDAG, termID), termID),
+               removeGenes, .genesToRemove, upNodes.LookUP)
       }
     }
   }
