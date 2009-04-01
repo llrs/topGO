@@ -31,172 +31,17 @@ groupGOTerms <- function(where) {
 }
 
 
-
-
-annFUN.db <- function(whichOnto, feasibleGenes = NULL, affyLib) {
+## given a list of vectors this function is returning the reverse list
+## given a mapping form genes to GO terms as a list, compute which are
+## the genes mapped to each GO.
+inverseList <- function(l) {
+  rId <- unlist(l, use.names = FALSE)
+  lId <- rep(names(l), sapply(l, length))
   
-  require(affyLib, character.only = TRUE) || stop(paste('package', affyLib, 'is required', sep = " "))
-  affyLib <- sub(".db$", "", affyLib)
-  mapping <- get(paste(affyLib, 'GO2PROBE', sep = ''))
-  
-  if(is.null(feasibleGenes))
-    feasibleGenes <- ls(get(paste(affyLib, 'ACCNUM', sep = '')))
-  ## Lkeys(get(paste(affyLib, 'ACCNUM', sep = ''))))
-  
-  ontoGO <- get(paste('GO', whichOnto, "Term", sep = ''))
-  goodGO <- intersect(ls(ontoGO), ls(mapping))
-
-  ## we can use a faster intersction here
-  ## can be optimize using a Bimap and split, but the intersection is still important
-  GOtoAffy <- lapply(mget(goodGO, envir = mapping, ifnotfound = NA),
-                     intersect, feasibleGenes)
-  
-  emptyTerms <- sapply(GOtoAffy, length) == 0
-
-  return(GOtoAffy[!emptyTerms])
-}
-  
-
-annFUN <- function(whichOnto, feasibleGenes = NULL, affyLib) {
-    
-  require(affyLib., character.only = TRUE) || stop(paste('package', affyLib, 'is required', sep = " "))
-  mapping <- get(paste(affyLib, 'GO2PROBE', sep = ''))
-
-  if(is.null(feasibleGenes))
-    feasibleGenes <- ls(get(paste(affyLib, 'ACCNUM', sep = '')))
-      
-  ontoGO <- get(paste('GO', whichOnto, "Term", sep = ''))
-  goodGO <- intersect(ls(ontoGO), ls(mapping))
-
-  GOtoAffy <- lapply(mget(goodGO, envir = mapping, ifnotfound = NA),
-                     intersect, feasibleGenes)
-  
-  emptyTerms <- sapply(GOtoAffy, length) == 0
-
-  return(GOtoAffy[!emptyTerms])
+  return(split(lId, rId))
 }
 
 
-## the annotation function
-annFUN.gene2GO <- function(whichOnto, feasibleGenes = NULL, gene2GO) {
-
-  ## GO terms annotated to the specified ontology 
-  ontoGO <- get(paste("GO", whichOnto, "Term", sep = ""))
-
-  ## Restrict the mappings to the feasibleGenes set  
-  if(!is.null(feasibleGenes))
-    gene2GO <- gene2GO[intersect(names(gene2GO), feasibleGenes)]
-  
-  ## Throw-up the genes which have no annotation
-  if(any(is.na(gene2GO)))
-    gene2GO <- gene2GO[!is.na(gene2GO)]
-  
-  numGO <- sapply(gene2GO, length)
-  gene2GO <- gene2GO[numGO > 0]
-  numGO <- numGO[numGO > 0]
-  
-  ## Get all the GO and keep a one-to-one mapping with the genes
-  allGO = unlist(gene2GO, use.names = FALSE)
-  geneID = rep(names(numGO), numGO)
-
-  ii <- order(allGO)
-  geneID <- geneID[ii]
-  
-  ## Get the multiplicities of each GO
-  tt <- table(allGO)
-  msGOterms <- split(geneID, rep(1:length(tt), tt))
-  names(msGOterms) <- names(tt)
-
-  ## Select only the GO's form the specified ontology
-  goodGO <- intersect(ls(ontoGO), names(tt))
-  return(msGOterms[goodGO])
-}
-
-## another verssion of the annotation  function
-annHASH.gene2GO <- function(whichOnto, feasibleGenes = NULL, gene2GO) {
-
-  ## GO terms annotated to the specified ontology 
-  ontoGO <- get(paste("GO", whichOnto, "Term", sep = ""))
-
-  ## Restrict the mappings to the feasibleGenes set  
-  if(!is.null(feasibleGenes))
-    gene2GO <- gene2GO[intersect(names(gene2GO), feasibleGenes)]
-  
-  ## Throw-up the genes which have no annotation
-  if(any(is.na(gene2GO)))
-    gene2GO <- gene2GO[!is.na(gene2GO)]
-  
-  gene2GO <- gene2GO[sapply(gene2GO, length) > 0]
-
-  ## now we have to form the groups and store the genes that will be mapped
-  msGOterms <- new.env(hash = TRUE, parent = emptyenv())
-  genesID <- new.env(hash = TRUE, parent = emptyenv())
-  
-  for(gn in names(gene2GO)) {
-    Terms <- gene2GO[[gn]]
-
-    ## store the gene ID into the genesID hash tabele
-    assign(gn, FALSE, envir = genesID)
-    hashedTerms <- mget(Terms, envir = msGOterms, mode = 'environment', ifnotfound = list(NA))
-
-    ## for the new terms, form an environment with the gene id (this should be
-    ## the fastest way since we not recopy every time)
-    newTerms.idx <- is.na(hashedTerms)
-    newTerms <- Terms[newTerms.idx]
-
-    if((ln.newTerms <- length(newTerms)) > 0) {
-      lapply(newTerms,
-             function(term) {
-               x <- new.env(hash = TRUE, parent = emptyenv()) 
-               assign(gn, FALSE, envir = x)
-               assign(term, x, envir = msGOterms)
-             })
-    }
-    
-    ## for the old groups we must add the new genes id to the actual environment
-    oldT <- hashedTerms[!newTerms.idx]
-    if(length(oldT) > 0)
-      lapply(oldT, function(termEnv) assign(gn, FALSE, envir = termEnv))
-  }
-
-  goodGO <- intersect(ls(ontoGO), ls(msGOterms))
-  msGOterms <- lapply(mget(goodGO, envir = msGOterms, mode = "environment"), ls)
-
-  return(msGOterms)
-}
-
-
-## the annotation function
-annFUN.GO2genes <- function(whichOnto, feasibleGenes = NULL, GO2genes) {
-  
-  ## GO terms annotated to the specified ontology 
-  ontoGO <- get(paste("GO", whichOnto, "Term", sep = ""))
-
-  if(is.null(feasibleGenes))
-    feasibleGenes <- unique(unlist(GO2genes, use.names = FALSE))
-  
-  ## Select only the GO's form the specified ontology
-  goodGO <- intersect(ls(ontoGO), names(GO2genes))
-  GO2genes <- lapply(GO2genes[goodGO], intersect, feasibleGenes)
-
-  return(GO2genes[sapply(GO2genes, length) > 0])
-}
-
-
-
-
-
-## function returning all genes that can be used for analysis 
-feasibleGenes.db <- function(affyLib, whichOnto) {
-
-  affyLib <- sub(".db$", "", affyLib)
-  mapping <- get(paste(affyLib, 'GO2PROBE', sep = ''))
-  
-  ontoGO <- get(paste('GO', whichOnto, "Term", sep = ''))
-  goodGO <- intersect(ls(ontoGO), ls(mapping))
-
-  return(unique(unlist(mget(goodGO, envir = mapping, ifnotfound = NA))))
-}
 
 
 
@@ -210,7 +55,7 @@ if(!isGeneric("printGenes"))
 ########
 ## TODO
 ##
-## remove the affyLib argument and replace it with a function which,
+## remove the chip argument and replace it with a function which,
 ## given a list of genes will provide information about these genes
 ##
 ## TODO
@@ -221,18 +66,18 @@ if(!isGeneric("printGenes"))
 ## a list of data.frames, each data.frame containg the gene information for specified GO term
 setMethod("printGenes",
           signature(object = "topGOdata", whichTerms = "character", file = "missing"),
-          function(object, whichTerms, affyLib, numChar = 100, simplify = TRUE,
+          function(object, whichTerms, chip, numChar = 100, simplify = TRUE,
                    geneCufOff = 50, pvalCutOff) { 
             
             term.genes <- genesInTerm(object, whichTerms)
             all.genes <- character()
             lapply(term.genes, function(x) all.genes <<- union(x, all.genes))
 
-            affyLib <- sub(".db$", "", affyLib)
+            chip <- sub(".db$", "", chip)
             
-            LL.lib <- get(paste(affyLib, "ENTREZID", sep = ""))
-            Sym.lib <- get(paste(affyLib, "SYMBOL", sep = ""))
-            GNAME.lib <- get(paste(affyLib, "GENENAME", sep = ""))
+            LL.lib <- get(paste(chip, "ENTREZID", sep = ""))
+            Sym.lib <- get(paste(chip, "SYMBOL", sep = ""))
+            GNAME.lib <- get(paste(chip, "GENENAME", sep = ""))
 
             probeMapping <- data.frame(LL.id = as.integer(unlist(mget(all.genes,
                                          envir = LL.lib, ifnotfound = NA))),
@@ -267,7 +112,7 @@ setMethod("printGenes",
               genesNames <- paste(substr(genesNames, 1, numChar),
                                   ifelse(nchar(genesNames) > numChar, "...", ""), sep = "")
               
-              retList[[gt]] <- cbind("Affy ID" = affID, probeMapping[affID, ], "Gene name" = genesNames,
+              retList[[gt]] <- cbind("Chip ID" = affID, probeMapping[affID, ], "Gene name" = genesNames,
                                      "raw p-value" = format.pval(pval[affID], dig = 3, eps = 1e-30))
             }            
 
@@ -527,3 +372,28 @@ getPvalues <- function(edata, classlabel, test = "t",
   return(2)
 }
 
+################################################################################
+################################################################################
+
+## functions to get gene stats from the topGOdata object
+.getGeneData <- function(object) {
+  return(c(Annotated = numGenes(object),
+           Significant = numSigGenes(object),
+           NodeSize = object@nodeSize))
+}
+
+
+## functions to get gene stats from the topGOdata object
+.printGeneData <- function(x) {
+  cat("Annotation data:\n")
+  if("Annotated" %in% names(x))
+    cat("    Annotated genes:", x["Annotated"], "\n")
+  if("Significant" %in% names(x))
+    cat("    Significant genes:", x["Significant"], "\n")
+  cat("    Min. no. of genes annotated to a GO:", x["NodeSize"], "\n")
+  if("SigTerms" %in% names(x))
+    cat("    Nontrivial nodes:", x["SigTerms"], "\n")
+}
+
+################################################################################
+################################################################################

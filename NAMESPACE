@@ -1,13 +1,13 @@
-import(Biobase)
-import(AnnotationDbi)
-import(methods)
-import(graph)
-import(SparseM)
+import(methods, Biobase, AnnotationDbi, graph)
+
+importFrom(SparseM, t)
+
+importFrom(lattice, densityplot, xyplot)
 
 
 exportClasses(topGOdata, topGOresult, groupStats,
               classicCount, classicScore, classicExpr,
-              removeCount, removeScore, removeExpr,
+              weight01Count, weight01Score, weight01Expr,
               elimCount, elimScore, elimExpr,
               weightCount, pC, parentChild)
 
@@ -21,16 +21,16 @@ exportMethods(initialize, description, ontology, allGenes, feasible, graph,
               sigAllMembers, numSigAll, sigMembers, numSigMembers, contTable, allScore,
               membersScore, "score<-", rankMembers, pType, "pType<-", 
               membersExpr, getSigGroups, elim, cutOff, "elim<-", "cutOff<-", updateGroup,
-              "Weights<-", Weights, "sigRatio<-", getSigRatio, score, testName, testClass,
-              "score<-", "testName<-", "testClass<-", printGenes, penalise,
-              scoreOrder, testStatPar, printGraph, GenTable,
+              "Weights<-", Weights, "sigRatio<-", getSigRatio, score, testName, algorithm,
+              geneData, "geneData<-", "score<-", "testName<-", "algorithm<-",
+              printGenes, penalise, scoreOrder, testStatPar, printGraph, GenTable,
               GOFisherTest, GOKSTest, GOtTest, GOglobalTest,
               joinFun, allParents,
               expressionMatrix, phenotype)
 
-export(annFUN.db, annFUN, annFUN.gene2GO, annFUN.GO2genes,
-       GOplot, showSigOfNodes, getPvalues, groupGOTerms,
-       reverseArch, getGraphRoot, buildGOgraph.topology,
-       nodesInInducedGraph, inducedGraph, buildLevels,
-       getNoOfLevels, mapGenes2GOgraph, .sigAllMethods, 
-       .getFromNode, .genesInNode, .countsInNode, .writeToNodes)
+export(annFUN.db, annFUN, annFUN.gene2GO, annFUN.GO2genes, annFUN.org, annFUN.file,
+       readMappings, inverseList, whichAlgorithms, whichTests, 
+       GOplot, showSigOfNodes, getPvalues, showGroupDensity,
+       reverseArch, nodesInInducedGraph, inducedGraph, buildLevels,
+       getNoOfLevels, getGraphRoot,
+       groupGOTerms, .genesInNode, .countsInNode)

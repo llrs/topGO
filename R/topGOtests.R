@@ -32,9 +32,9 @@ setMethod("GOKSTest", "classicScore",
               return(1)
 
             x.a <- rankMembers(object)
-            x.b <- setdiff(1:N, x.a)
-
-            return(ks.test(x.a, x.b, alternative = "greater")$p.value)
+            ## x.b <- setdiff(1:N, x.a)
+            
+            return(ks.test(x.a, seq_len(N)[-x.a], alternative = "greater")$p.value)
           })
 
 
@@ -55,14 +55,14 @@ setMethod("GOtTest", "classicScore",
             nG <- numMembers(object)
             nNotG <- numAllMembers(object) - nG
             
-            ## if the group complementary is empty 
+            ## if the group/complementary is empty 
             if(nNotG == 0 || nG == 0)
               return(1)
 
             x.G <- membersScore(object)
             x.NotG <- allScore(object, TRUE)[setdiff(allMembers(object), members(object))]
 
-            aa <- alternative(object)
+            aa <- scoreOrder(object)
             ## alternative - TRUE if the max(score) is the best score), FALSE if the min(score)...
             if(nNotG == 1) {
               .stat <- ifelse(aa, sum(x.G >= x.NotG), sum(x.G <= x.NotG))
@@ -90,7 +90,7 @@ setMethod("GOglobalTest", "classicExpr",
             if(numMembers(object) == 0)
               return(1)
 
-            return(p.value(globaltest(X = membersExpr(object), Y = pType(object))))
+            return(globaltest:::p.value(globaltest:::globaltest(X = membersExpr(object), Y = pType(object))))
           })
 
 

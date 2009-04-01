@@ -48,8 +48,10 @@ setClass("topGOresult",
            score = "numeric",
            ## which test statistic was used 
            testName = "character",
-           ## which class was used 
-           testClass = "character"))
+           ## which algorithm was used 
+           algorithm = "character",
+           ## stats about the genes ...
+           geneData = "ANY"))
 
 
 
@@ -115,43 +117,43 @@ setClass("classicExpr", contains = "groupStats",
 
 
 
-##################### removeCount class #########################
+##################### weight01Count class #########################
 ## used for elim2 algorithm
-setClass("removeCount", contains = "classicCount", 
+setClass("weight01Count", contains = "classicCount", 
          representation = representation(
            ## the index of which of the group members should be removed
            elim = "integer"))
 
 
-##################### removeScore class #########################
-setClass("removeScore", contains = "classicScore",
+##################### weight01Score class #########################
+setClass("weight01Score", contains = "classicScore",
          representation = representation(
            ## the score for each member, the most important
            ## member has the highest score
            elim = "integer"))
 
 
-##################### removeExpr class #########################
-setClass("removeExpr", contains = "classicExpr",
+##################### weight01Expr class #########################
+setClass("weight01Expr", contains = "classicExpr",
          representation = representation(
            elim = "integer"))
 
 
 
 ####################### elimCount class #########################
-setClass("elimCount", contains = "removeCount", 
+setClass("elimCount", contains = "weight01Count", 
          representation = representation(
            cutOff = "numeric"))
 
 
 ####################### elimScore class #########################
-setClass("elimScore", contains = "removeScore",
+setClass("elimScore", contains = "weight01Score",
          representation = representation(
            cutOff = "numeric")) 
 
 
 ####################### elimExpr class ##########################
-setClass("elimExpr", contains = "removeExpr",
+setClass("elimExpr", contains = "weight01Expr",
          representation = representation(
            cutOff = "numeric"))
 

@@ -22,7 +22,7 @@ setMethod("initialize", "topGOdata",
                    ## phenotype information     #!
                    phenotype = NULL,            #!
                    ## minimum node size
-                   nodeSize = 0,
+                   nodeSize = 1,
                    ## annotation function
                    annotationFun,
                    ## additional parameters for the annotationFun
@@ -61,7 +61,7 @@ setMethod("initialize", "topGOdata",
             }
 
             ## size of the nodes which will be pruned
-            .Object@nodeSize = as.integer(nodeSize)
+            .Object@nodeSize = as.integer(max(nodeSize, 1))
 
             ## loading some required libraries 
             require('GO.db') || stop('package GO.db is required')
@@ -90,10 +90,16 @@ setMethod("initialize", "topGOdata",
             cat("\t(", length(feasibleGenes), "genes annotated to the GO terms. )\n")
 
             .Object@feasible <- .Object@allGenes %in% feasibleGenes
-            
-            cc <- .countsInNode(g, nodes(g))
-            .Object@graph <- subGraph(names(cc)[cc >= .Object@nodeSize], g)
-            
+
+
+            ## prune the GO graph
+            if(.Object@nodeSize > 1) {
+              cc <- .countsInNode(g, nodes(g))
+              .Object@graph <- subGraph(names(cc)[cc >= .Object@nodeSize], g)
+            } else {
+              .Object@graph <-  g
+            }
+                          
             .Object
           })
 
@@ -510,7 +516,7 @@ setMethod("show", "topGOdata", function(object) .printTopGOdata(x = object))
   }
   cat("   -", numSigGenes(x), " significant genes. \n")
 
-  cat("\n GO graph (nodes with at least ", x@nodeSize, " genes):\n")
+  cat("\n GO graph (nodes with at least ", max(x@nodeSize, 1), " genes):\n")
   gg <- graph(x)
   cat("   - a graph with", edgemode(gg), "edges\n")
   cat("   - number of nodes =", numNodes(gg), "\n")
@@ -536,12 +542,13 @@ setMethod("show", "topGOdata", function(object) .printTopGOdata(x = object))
 
 setMethod("initialize", "topGOresult",
           function(.Object, description = character(),
-                   score, testName, testClass) {
+                   score, testName, algorithm, geneData = integer()) {
             .Object@description <- description
             .Object@score <- score
             .Object@testName <- testName
-            .Object@testClass <- testClass
-
+            .Object@algorithm <- algorithm
+            .Object@geneData <- geneData
+            
             .Object
           })
 
@@ -551,10 +558,33 @@ setMethod("initialize", "topGOresult",
 setMethod("description", "topGOresult", function(object) object@description)
 
 if(!isGeneric("score"))
-  setGeneric("score", function(object) standardGeneric("score"))
+  setGeneric("score", function(object, whichGO) standardGeneric("score"))
                                
-setMethod("score", "topGOresult", function(object) object@score)
+setMethod("score",
+          signature(object = "topGOresult", whichGO = "missing"),
+          function(object) object@score)
 
+setMethod("score",
+          signature(object = "topGOresult", whichGO = "character"),
+          function(object, whichGO) {
+            
+            allGO <- names(object@score)
+            feasableGO <- intersect(whichGO, allGO) # in this way the order of whichGO is preserved 
+
+            if(length(feasableGO) < 1) {
+              warning("The specified GO terms could not be found in the object... Returning empty vector")
+              return(numeric(0))
+            }
+            
+            x <- setdiff(whichGO, allGO)
+            if(length(x) > 0)
+              warning("Not all specified GOs can be found in the object.")
+            x <- setdiff(allGO, whichGO)
+            if(length(x) > 0)
+              warning("Not all GOs from the object were retrived.")
+            
+            return(object@score[feasableGO])
+          })
 
 if(!isGeneric("testName"))
   setGeneric("testName", function(object) standardGeneric("testName"))
@@ -562,10 +592,16 @@ if(!isGeneric("testName"))
 setMethod("testName", "topGOresult", function(object) object@testName)
 
 
-if(!isGeneric("testClass"))
-  setGeneric("testClass", function(object) standardGeneric("testClass"))
+if(!isGeneric("algorithm"))
+  setGeneric("algorithm", function(object) standardGeneric("algorithm"))
                                
-setMethod("testClass", "topGOresult", function(object) object@testClass)
+setMethod("algorithm", "topGOresult", function(object) object@algorithm)
+
+
+if(!isGeneric("geneData"))
+  setGeneric("geneData", function(object) standardGeneric("geneData"))
+                               
+setMethod("geneData", "topGOresult", function(object) object@geneData)
 
 #################### the replacement functions ####################
 
@@ -584,10 +620,30 @@ if(!isGeneric("testName<-"))
 setMethod("testName<-", "topGOresult", function(object, value) {object@testName <- value; object})
 
 
-if(!isGeneric("testClass<-"))
-  setGeneric("testClass<-", function(object, value) standardGeneric("testClass<-"))
+if(!isGeneric("algorithm<-"))
+  setGeneric("algorithm<-", function(object, value) standardGeneric("algorithm<-"))
                                
-setMethod("testClass<-", "topGOresult", function(object, value) {object@testClass <- value; object})
+setMethod("algorithm<-", "topGOresult", function(object, value) {object@algorithm <- value; object})
+
+
+if(!isGeneric("geneData<-"))
+  setGeneric("geneData<-", function(object, value) standardGeneric("geneData<-"))
+                               
+setMethod("geneData<-", "topGOresult", function(object, value) {object@geneData <- value; object})
+
+
+##############################  printing   ##############################
+## make use of both "print" and "show" generics
+
+setMethod("print", "topGOresult", function(x, ...) .printTopGOresult(x))
+setMethod("show", "topGOresult", function(object) .printTopGOresult(x = object))
+          
+.printTopGOresult <- function(x) {
+  cat("\nDescription:", description(x), "\n")
+  cat("'", algorithm(x), "' algorithm with the '", testName(x), "' test\n", sep = "")
+  cat(length(score(x)), "GO terms scored:", sum(score(x) <=  0.01), "terms with p < 0.01\n")
+  .printGeneData(geneData(x))
+}
 
 
 
@@ -759,12 +815,10 @@ setMethod("contTable", "classicCount",
 
             numHits <- numSigMembers(object)
             numSig <- numSigAll(object)
-
-            sig <- c(numHits, numSig - numHits)
-            not.sig <- c(numMembers(object) - numHits,
-                         numAllMembers(object) - numMembers(object) - numSig + numHits)
+            numM <- numMembers(object)
             
-            contMat <- cbind(sig = sig, notSig = not.sig)
+            contMat <- cbind(sig = c(numHits, numSig - numHits),
+                             notSig = c(numM - numHits, numAllMembers(object) - numM - numSig + numHits))
             row.names(contMat) <- c("anno", "notAnno")
 
             return(contMat)
@@ -869,10 +923,11 @@ setMethod("score<-", "classicScore",
 ## rank the members of the group according to their score
 if(!isGeneric("rankMembers"))
   setGeneric("rankMembers", function(object) standardGeneric("rankMembers"))
-                               
+
+## return(which(object@allMembers %in% object@members)) replace with match ... should be faster
 setMethod("rankMembers", "classicScore",
           function(object) {
-            return(which(object@allMembers %in% object@members))
+            return(match(object@members, object@allMembers))
           })
 
 
@@ -947,10 +1002,10 @@ setMethod("membersExpr", "classicExpr", function(object)
 ######################################################################
 
 
-#################### removeCount methods ####################
+#################### weight01Count methods ####################
 
 #################### constructor ####################
-setMethod("initialize", "removeCount",
+setMethod("initialize", "weight01Count",
           function(.Object,
                    testStatistic,
                    name = character(),
@@ -972,7 +1027,7 @@ setMethod("initialize", "removeCount",
 if(!isGeneric("elim<-"))
   setGeneric("elim<-", function(object, value) standardGeneric("elim<-"))
                                
-setMethod("elim<-", "removeCount",
+setMethod("elim<-", "weight01Count",
           function(object, value) {
             object@elim <- which(object@members %in% value)
             object
@@ -981,38 +1036,38 @@ setMethod("elim<-", "removeCount",
 if(!isGeneric("elim")) 
   setGeneric("elim", function(object) standardGeneric("elim"))
                                
-setMethod("elim", "removeCount",
+setMethod("elim", "weight01Count",
           function(object) object@members[object@elim])
 
 ## account for the eliminated members
 #TODO:
 
-setMethod("numMembers", "removeCount",
+setMethod("numMembers", "weight01Count",
           function(object) length(object@members) - length(object@elim))
 
-setMethod("numAllMembers", "removeCount",
+setMethod("numAllMembers", "weight01Count",
           function(object) length(object@allMembers) - length(object@elim))
 
-setMethod("sigAllMembers", "removeCount",
+setMethod("sigAllMembers", "weight01Count",
           function(object) setdiff(object@allMembers[object@significant], elim(object)))
           
-setMethod("numSigAll", "removeCount",
+setMethod("numSigAll", "weight01Count",
           function(object) length(sigAllMembers(object)))
 
-setMethod("sigMembers", "removeCount",
+setMethod("sigMembers", "weight01Count",
           function(object) intersect(sigAllMembers(object), members(object)))
 
-setMethod("numSigMembers", "removeCount",
+setMethod("numSigMembers", "weight01Count",
           function(object) length(sigMembers(object)))
 
 
 
 
 
-#################### removeScore methods ####################
+#################### weight01Score methods ####################
 
 #################### constructor ####################
-setMethod("initialize", "removeScore",
+setMethod("initialize", "weight01Score",
           function(.Object,
                    testStatistic,
                    name = character(),
@@ -1032,15 +1087,15 @@ setMethod("initialize", "removeScore",
             .Object
           })
 
-setMethod("elim<-", "removeScore",
+setMethod("elim<-", "weight01Score",
           function(object, value) {
             object@elim <- which(object@members %in% value)
             object
           })
 
-setMethod("elim", "removeScore", function(object) object@members[object@elim])
+setMethod("elim", "weight01Score", function(object) object@members[object@elim])
 
-setMethod("members", "removeScore",
+setMethod("members", "weight01Score",
           function(object) {
             if(length(object@elim) == 0)
               return(object@members)
@@ -1048,17 +1103,17 @@ setMethod("members", "removeScore",
             return(object@members[-object@elim])
           })
 
-setMethod("allMembers", "removeScore",
+setMethod("allMembers", "weight01Score",
           function(object) object@allMembers[!(object@allMembers %in% elim(object))])
 
-setMethod("numMembers", "removeScore",
+setMethod("numMembers", "weight01Score",
           function(object) length(object@members) - length(object@elim))
 
-setMethod("numAllMembers", "removeScore",
+setMethod("numAllMembers", "weight01Score",
           function(object) length(object@allMembers) - length(object@elim))
 
 setMethod("allScore",
-          signature(object = "removeScore", use.names = "missing"),
+          signature(object = "weight01Score", use.names = "missing"),
           function(object) {
             ret.val <- object@score
             index <- !(object@allMembers %in% elim(object))
@@ -1067,7 +1122,7 @@ setMethod("allScore",
           })
 
 setMethod("allScore",
-          signature(object = "removeScore", use.names = "logical"),
+          signature(object = "weight01Score", use.names = "logical"),
           function(object, use.names = FALSE) {
             ret.val <- object@score
             index <- !(object@allMembers %in% elim(object))
@@ -1078,7 +1133,7 @@ setMethod("allScore",
             return(ret.val[index])
           })
 
-setMethod("membersScore", "removeScore",
+setMethod("membersScore", "weight01Score",
           function(object) {
             ## since members(object) has the eliminated members removed
             index <- object@allMembers %in% members(object)
@@ -1091,7 +1146,7 @@ setMethod("membersScore", "removeScore",
           })
 
 
-setMethod("rankMembers", "removeScore",
+setMethod("rankMembers", "weight01Score",
           function(object) {
             ## NEED to use methods allMembers and members since they accont for removed members
             return(which(allMembers(object) %in% members(object)))
@@ -1100,10 +1155,10 @@ setMethod("rankMembers", "removeScore",
 
 
 
-#################### removeExpr methods ####################
+#################### weight01Expr methods ####################
 
 #################### constructor ####################
-setMethod("initialize", "removeExpr",
+setMethod("initialize", "weight01Expr",
           function(.Object,
                    testStatistic,
                    name = character(),
@@ -1124,7 +1179,7 @@ setMethod("initialize", "removeExpr",
 if(!isGeneric("elim<-"))
   setGeneric("elim<-", function(object, value) standardGeneric("elim<-"))
                                
-setMethod("elim<-", "removeExpr",
+setMethod("elim<-", "weight01Expr",
           function(object, value) {
             object@elim <- which(object@members %in% value)
             object
@@ -1133,11 +1188,11 @@ setMethod("elim<-", "removeExpr",
 if(!isGeneric("elim")) 
   setGeneric("elim", function(object) standardGeneric("elim"))
                                
-setMethod("elim", "removeExpr",
+setMethod("elim", "weight01Expr",
           function(object) object@members[object@elim])
 
 ## probably not a good idea ....
-setMethod("members", "removeExpr",
+setMethod("members", "weight01Expr",
           function(object) {
             if(length(object@elim) == 0)
               return(object@members)
@@ -1145,13 +1200,13 @@ setMethod("members", "removeExpr",
             return(object@members[-object@elim])
           })
 
-setMethod("allMembers", "removeExpr",
+setMethod("allMembers", "weight01Expr",
           function(object) callNextMethod(object)[!(callNextMethod(object) %in% elim(object))])
 
-setMethod("numMembers", "removeExpr",
+setMethod("numMembers", "weight01Expr",
           function(object) length(object@members) - length(object@elim))
 
-setMethod("numAllMembers", "removeExpr",
+setMethod("numAllMembers", "weight01Expr",
           function(object) length(object@allMembers) - length(object@elim))
 
 

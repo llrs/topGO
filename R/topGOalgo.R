@@ -10,11 +10,15 @@
                    c(1, 0, 0, 0, 0, 0),
                    c(1, 0, 1, 1, 1, 0),
                    c(1, 0, 0, 0, 0, 0))
-rownames(.algoComp) <- c("classic", "elim", "weight", "remove", "parentchild")
+rownames(.algoComp) <- c("classic", "elim", "weight", "weight01", "parentchild")
 colnames(.algoComp) <- c("fisher", "z", "ks", "t", "globaltest", "category")
 
 .testNames <- c("GOFisherTest" , "GOKSTest", "GOtTest", "GOglobalTest")
 names(.testNames) <- c("fisher", "ks", "t", "globaltest")
+
+.algoClass <- c("classic", "elim", "weight", "weight01", "parentchild")
+names(.algoClass) <- c("classic", "elim", "weight", "weight01", "parentchild")
+
 
 ## functions to extract the information from the .algoComp
 whichAlgorithms <- function() {
@@ -41,6 +45,7 @@ setMethod("runTest",
             if(.algoComp[algorithm, statistic] == 0)
               stop("The algorithm doesn't support the given test statistic")
 
+            algorithm <- .algoClass[algorithm]
             ## strong asumtions! 
             if(algorithm == "parentchild")
               testType <- "pC"
@@ -59,25 +64,19 @@ setMethod("runTest",
 
 ##resultKS <- runTest(GOdata, algorithm = "classic", statistic = "KS")
 
-
-## dispatch method for weight01 algorithm - the default algorithm
+## dispatch method for weight01 (or topGO) algorithm - the default algorithm
 setMethod("runTest",
           signature(object = "topGOdata", algorithm = "missing", statistic = "character"),
           function(object, statistic, ...) { ## ... parameters for the test statistic
-            return(runTest(object, "remove", statistic, ...))
+            return(runTest(object, "weight01", statistic, ...))
           })
 
 
 
 ######################################################################
 ######################################################################
-
-
 ## This function is use for dispatching each algorithm
 ## probably more checking could be done in the end!
-
-
-## WE CAN use functions like getSigGroups(object) <- test.stat
 
 if(!isGeneric("getSigGroups")) 
   setGeneric("getSigGroups", function(object, test.stat, ...) standardGeneric("getSigGroups"))
@@ -104,20 +103,27 @@ setMethod("getSigGroups",
             cat("\t\t parameters: \n")
             cat("\t\t\t test statistic: ", Name(test.stat), "\n")
 
-            ## apply the algorithm
-            algoRes <- .sigGroups.classic(genesInTerm(object, .sigTerms), test.stat)
+            ## check if there is at least one nontrivial GO term !!!
+            if(length(.sigTerms) > 0) {
+              ## apply the algorithm
+              algoRes <- .sigGroups.classic(genesInTerm(object, .sigTerms), test.stat)
+            } else {
+              algoRes <- numeric()
+              warning("No enrichment can pe performed - there are no feasible GO terms!")
+            }
             
             aux <- rep(1, length(not.sigTerms))
             names(aux) <- not.sigTerms
             algoRes <- c(algoRes, aux)
   
-            ## WE CAN STORE THE RESULTS IN THE topGOdata. Not for now
-            ## updateTerm(object, attr = "classic") <- sigList
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes, testName = Name(test.stat),
-                          testClass = as.character(class(test.stat)))
-            
-            return(object)
+            ## STORE THE RESULTS
+            .whichAlgorithm <- "classic"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(.sigTerms))))
           })
 
 setMethod("getSigGroups",
@@ -126,13 +132,10 @@ setMethod("getSigGroups",
 
             ## update the test.stat object if there is the case
             if(length(allScore(test.stat)) == 0) {
-              ss <- geneScore(object)
-              names(ss) <- genes(object)
-              
               allMembers(test.stat) <- genes(object)
-              score(test.stat) <- ss
+              score(test.stat) <- geneScore(object, use.names = TRUE)
             }
-
+            
             GOlist <- genesInTerm(object)
             cat("\n\t\t\t -- Classic Algorithm -- \n")
             cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
@@ -141,12 +144,15 @@ setMethod("getSigGroups",
             cat("\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"), "\n")
             
             algoRes <- .sigGroups.classic(GOlist, test.stat)
-                        
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes, testName = Name(test.stat),
-                          testClass = as.character(class(test.stat)))
-
-            return(object)
+            
+            ## STORE THE RESULTS
+            .whichAlgorithm <- "classic"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(GOlist))))
           })
 
 
@@ -164,12 +170,14 @@ setMethod("getSigGroups",
             cat("\t\t\t test statistic: ", Name(test.stat), "\n")
             
             algoRes <- .sigGroups.classic(GOlist, test.stat)
-                        
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes, testName = Name(test.stat),
-                          testClass = as.character(class(test.stat)))
 
-            return(object)
+            .whichAlgorithm <- "classic"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(GOlist))))
           })
 
 
@@ -198,24 +206,30 @@ setMethod("getSigGroups",
             cat("\t\t parameters: \n")
             cat("\t\t\t test statistic: ", Name(test.stat), "\n")
             cat("\t\t\t cutOff: ", cutOff(test.stat), "\n")
-  
-            ## restrict the graph
-            g <- subGraph(.sigTerms, graph(object))
-            ## apply the algorithm
-            algoRes <- .sigGroups.elim(g, test.stat)
-            
+
+            ## check if there is at least one nontrivial GO term !!!
+            if(length(.sigTerms) > 0) {
+              ## restrict the graph
+              g <- subGraph(.sigTerms, graph(object))
+              ## apply the algorithm
+              algoRes <- .sigGroups.elim(g, test.stat)
+            } else {
+              algoRes <- numeric()
+              warning("No enrichment can pe performed - there are no feasible GO terms!")
+            }
+              
             aux <- rep(1, length(not.sigTerms))
             names(aux) <- not.sigTerms
             algoRes <- c(algoRes, aux)
   
-            ## WE CAN STORE THE RESULTS IN THE topGOdata. Not for now
-            ## updateTerm(object, attr = "elim") <- algoRes
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes,
-                          testName = paste(Name(test.stat), cutOff(test.stat), sep = " : "), 
-                          testClass = as.character(class(test.stat)))
-
-            return(object)
+            .whichAlgorithm <- "elim"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes,
+                       testName = paste(Name(test.stat), cutOff(test.stat), sep = " : "), 
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(.sigTerms))))
           })
 
 
@@ -225,11 +239,8 @@ setMethod("getSigGroups",
 
             ## update the test.stat object if there is the case
             if(length(allScore(test.stat)) == 0) {
-              ss <- geneScore(object)
-              names(ss) <- genes(object)
-              
               allMembers(test.stat) <- genes(object)
-              score(test.stat) <- ss
+              score(test.stat) <- geneScore(object, use.names = TRUE)
             }
 
             GOlist <- genesInTerm(object)
@@ -243,12 +254,15 @@ setMethod("getSigGroups",
             ## apply the algorithm
             algoRes <- .sigGroups.elim(graph(object), test.stat)
             
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes,
-                          testName = paste(Name(test.stat), cutOff(test.stat), sep = " : "), 
-                          testClass = as.character(class(test.stat)))
+            .whichAlgorithm <- "elim"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes,
+                       testName = paste(Name(test.stat), cutOff(test.stat), sep = " : "), 
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(GOlist))))
 
-            return(object)
           })
 
 
@@ -270,11 +284,14 @@ setMethod("getSigGroups",
             ## apply the algorithm
             algoRes <- .sigGroups.elim(graph(object), test.stat)
             
-            object <- new("topGOresult", description = description(object), score = algoRes,
-                          testName = paste(Name(test.stat), cutOff(test.stat), sep = " : "), 
-                          testClass = as.character(class(test.stat)))
-
-            return(object)
+            .whichAlgorithm <- "elim"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes,
+                       testName = paste(Name(test.stat), cutOff(test.stat), sep = " : "), 
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(GOlist))))
           })
 
 
@@ -283,9 +300,9 @@ setMethod("getSigGroups",
 ########################## weight01(topGO) algorithm ##########################
 ## dispatch method for weight01 algorithm
 ## to set the test statistic
-## test.stat <- new("removeCount", testStatistic = GOFisherTest, name = "Fisher test")
+## test.stat <- new("weight01Count", testStatistic = GOFisherTest, name = "Fisher test")
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "removeCount"),
+          signature(object = "topGOdata", test.stat = "weight01Count"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## update the test.stat object
@@ -302,35 +319,41 @@ setMethod("getSigGroups",
             cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
             cat("\t\t parameters: \n")
             cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-  
-            ## restrict the graph
-            g <- subGraph(.sigTerms, graph(object))
-            ## apply the algorithm
-            algoRes <- .sigGroups.weight01(g, test.stat)
-            
+
+            ## check if there is at least one nontrivial GO term !!!
+            if(length(.sigTerms) > 0) {
+              ## restrict the graph
+              g <- subGraph(.sigTerms, graph(object))
+              ## apply the algorithm
+              algoRes <- .sigGroups.weight01(g, test.stat)
+            } else {
+              algoRes <- numeric()
+              warning("No enrichment can pe performed - there are no feasible GO terms!")
+            }
+              
             aux <- rep(1, length(not.sigTerms))
             names(aux) <- not.sigTerms
             algoRes <- c(algoRes, aux)
   
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes, testName = Name(test.stat), 
-                          testClass = as.character(class(test.stat)))
+            .whichAlgorithm <- "weight01"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(.sigTerms))))
 
-            return(object)
           })
 
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "removeScore"),
+          signature(object = "topGOdata", test.stat = "weight01Score"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
 
             ## update the test.stat object if there is the case
             if(length(allScore(test.stat)) == 0) {
-              ss <- geneScore(object)
-              names(ss) <- genes(object)
-              
               allMembers(test.stat) <- genes(object)
-              score(test.stat) <- ss
+              score(test.stat) <- geneScore(object, use.names = TRUE)
             }
 
             GOlist <- genesInTerm(object)
@@ -343,16 +366,18 @@ setMethod("getSigGroups",
             ## apply the algorithm
             algoRes <- .sigGroups.weight01(graph(object), test.stat)
             
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes, testName = Name(test.stat), 
-                          testClass = as.character(class(test.stat)))
-
-            return(object)
+            .whichAlgorithm <- "weight01"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(GOlist))))
           })
 
 
 setMethod("getSigGroups",
-          signature(object = "topGOdata", test.stat = "removeExpr"),
+          signature(object = "topGOdata", test.stat = "weight01Expr"),
           function(object, test.stat, ...) { ## ... parameters for each algorithm
             
             ## update the test.stat object if there is the case
@@ -368,11 +393,13 @@ setMethod("getSigGroups",
             ## apply the algorithm
             algoRes <- .sigGroups.weight01(graph(object), test.stat)
             
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes, testName = Name(test.stat), 
-                          testClass = as.character(class(test.stat)))
-            
-            return(object)
+            .whichAlgorithm <- "weight01"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(GOlist))))
           })
 
 
@@ -399,22 +426,29 @@ setMethod("getSigGroups",
             cat("\t\t parameters: \n")
             cat("\t\t\t test statistic: ", Name(test.stat), "\n")
             
-            ## restrict the graph
-            g <- subGraph(.sigTerms, graph(object))
-            ## apply the algorithm
-            algoRes <- .sigGroups.weight(g, test.stat)
+            ## check if there is at least one nontrivial GO term !!!
+            if(length(.sigTerms) > 0) {
+              ## restrict the graph
+              g <- subGraph(.sigTerms, graph(object))
+              ## apply the algorithm
+              algoRes <- .sigGroups.weight(g, test.stat)
+            } else {
+              algoRes <- numeric()
+              warning("No enrichment can pe performed - there are no feasible GO terms!")
+            }
             
             aux <- rep(1, length(not.sigTerms))
             names(aux) <- not.sigTerms
             algoRes <- c(algoRes, aux)
 
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes, testName = Name(test.stat),
-                          testClass = as.character(class(test.stat)))
-
-            return(object)
+            .whichAlgorithm <- "weight"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(.sigTerms))))
           })
-
 
 
 
@@ -438,21 +472,29 @@ setMethod("getSigGroups",
             cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
             cat("\t\t parameters: \n")
             cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-  
-            ## restrict the graph
-            g <- subGraph(.sigTerms, graph(object))
-            ## apply the algorithm
-            algoRes <- .sigGroups.parentChild(g, test.stat, sigGenes(object))
-            
+
+            ## check if there is at least one nontrivial GO term !!!
+            if(length(.sigTerms) > 0) {
+              ## restrict the graph
+              g <- subGraph(.sigTerms, graph(object))
+              ## apply the algorithm
+              algoRes <- .sigGroups.parentChild(g, test.stat, sigGenes(object))
+            } else {
+              algoRes <- numeric()
+              warning("No enrichment can pe performed - there are no feasible GO terms!")
+            }
+                        
             aux <- rep(1, length(not.sigTerms))
             names(aux) <- not.sigTerms
             algoRes <- c(algoRes, aux)
   
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes, testName = Name(test.stat), 
-                          testClass = as.character(class(test.stat)))
-
-            return(object)
+            .whichAlgorithm <- "parentchild"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(.sigTerms))))
           })
 
 
@@ -472,20 +514,28 @@ setMethod("getSigGroups",
             cat("\t\t\t test statistic: ", Name(test.stat), "\n")
             cat("\t\t\t join function: ", test.stat@joinFun, "\n")
 
-            ## restrict the graph
-            g <- subGraph(.sigTerms, graph(object))
-            ## apply the algorithm
-            algoRes <- .sigGroups.parentChild(g, test.stat, sigGenes(object))
+            ## check if there is at least one nontrivial GO term !!!
+            if(length(.sigTerms) > 0) {
+              ## restrict the graph
+              g <- subGraph(.sigTerms, graph(object))
+              ## apply the algorithm
+              algoRes <- .sigGroups.parentChild(g, test.stat, sigGenes(object))
+            } else {
+              algoRes <- numeric()
+              warning("No enrichment can pe performed - there are no feasible GO terms!")
+            }
             
             aux <- rep(1, length(not.sigTerms))
             names(aux) <- not.sigTerms
             algoRes <- c(algoRes, aux)
-  
-            object <- new("topGOresult", description = description(object),
-                          score = algoRes, testName = Name(test.stat), 
-                          testClass = as.character(class(test.stat)))
 
-            return(object)
+            .whichAlgorithm <- "parentchild"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object), "\nOntology:", ontology(object), sep = " "),
+                       score = algoRes, testName = Name(test.stat),
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(.sigTerms))))
           })
 
 
@@ -778,218 +828,6 @@ setMethod("getSigGroups",
   
   return(unlist(as.list(sigList)))
 }
-
-
-
-
-
-
-
-
-
-
-########################## old WEIGHT algorithm ##########################
-.sigGroups.weight2 <- function(goDAG, test.stat, swJoinHT = TRUE) {
-
-  ## SOME FUNCTIONS THAT WE NEED
-  
-  ## make a join between x and y unsing the names as key
-  ## combFun should be a vectorial function
-  ## we can use functions like: pmin, *, pmax, ...
-  x.comb.y <- function(x, y, combFun = get('*')) {
-    
-    ## check if we weight the same set: always the case when we
-    ## set the genes in downNodes.LookUP
-    nx <- names(x)
-    ny <- names(y)
-    if((length(nx) == length(ny)) && all(nx == ny))
-      return(combFun(x, y))
-    
-    allNames <- union(nx, ny)
-    commonNames <- intersect(nx, ny)
-    
-    z <- numeric(length(allNames))
-    names(z) <- allNames
-    
-    z[nx] <- x
-    z[ny] <- y
-    z[commonNames] <- combFun(x[commonNames], y[commonNames])
-    
-    return(z)
-  }
-
-
-  setGeneWeights <- function(termID, geneWeights, LookUP.table) {
-    oldWeigths <- get(termID, envir = LookUP.table)
-    assign(termID, x.comb.y(geneWeights, oldWeigths), envir = LookUP.table)
-  }
-
-  
-  ## for the moment this is just the 'get' function
-  getNodeWeights <- get
-
-  
-  ## this time we don't look at the subtree rooted at node
-  ## in future we need a better strategy here !!!
-  ##recomputeSignificance <- function(group.test) {
-  ##  node <- Name(group.test)
-  ##  Weights(group.test) <- getNodeWeights(node, downNodes.LookUP)
-  ##
-  ##  assign(node, runTest(group.test), envir = sigList)
-  ##}
-  
-
-  ## this is a recursive function in termChildren
-  computeTermSig <- function(group.test, termChildren) {
-
-    termID <- Name(group.test)
-    ## look to see if there are some genes that must be weighted
-    Weights(group.test) <- get(termID, envir = upNodes.LookUP)    
-
-    ## run the test (the p-value)
-    termSig <- runTest(group.test)
-
-    ## NOW WE HAVE THE SIGNIFICANCE OF NODE u
-    
-    ## if we came from some recursive call
-    if(length(termChildren) == 0) {
-      assign(termID, termSig, envir = sigList)
-      return()
-    }
-    
-    ## since we konw that length(termChildren) > 0
-    w <- numeric(length(termChildren))
-    names(w) <- termChildren
-    
-    for(child in termChildren) {
-      ## look for the child significance
-      ## we should have the child significance in sigList
-      if(!exists(child, envir = sigList, inherits = FALSE))
-        stop('the child of node u, should had been processed')
-      childSig <- get(child, envir = sigList)
-      
-      w[child] <- getSigRatio(group.test, a = childSig, b = termSig)
-    }
-
-    ## if w[child] > 1 than that child is more significant
-    sig.termChildren <- names(w[w > 1])
-    
-    ## CASE 1:  if we don't have significant children then we
-    ## can solve for the other nodes
-    if(length(sig.termChildren) == 0) {
-      for(child in termChildren) {
-        ## the genes in this child
-        gene.child <- currAnno[[child]]
-        
-        ## weights for the genes in this child
-        gene.childWeights <- rep(w[child], length(gene.child))
-        names(gene.childWeights) <- gene.child
-
-        ## put the gene weights in the downNodes.LookUP hash-table
-        setGeneWeights(child, gene.childWeights, downNodes.LookUP)
-
-        ## now we must recompute the significance for the subgraph
-        ## rooted at 'child'
-        child.GT <- updateGroup(group.test, name = child,
-                                members = gene.child,
-                                weights = gene.childWeights)
-        assign(child, runTest(child.GT), envir = sigList)
-      }
-      ## since we have only less significant genes that means
-      ## that we don't recompute the significance for node 'u'
-      assign(termID, termSig, envir = sigList)
-      return()
-    }
-    
-    ## CASE 2:   'child' is more significant that 'u'
-    .nn <- members(group.test)
-    geneWeights <- numeric(length(.nn)) + 1
-    names(geneWeights) <- .nn
-
-    for(child in sig.termChildren) {
-      ## the genes in this child
-      gene.child <- currAnno[[child]]
-      
-      gene.childWeights <- rep(1 / w[child], length(gene.child))
-      names(gene.childWeights) <- gene.child
-
-      geneWeights <- x.comb.y(gene.childWeights, geneWeights)
-    }
-
-    ## we set the new weights only for node 'termID'
-    setGeneWeights(termID, geneWeights, upNodes.LookUP)
-
-    if(is.null(.gene.weights))
-      assign('.gene.weights', geneWeights, envir = .main.envir)
-    else
-      assign('.gene.weights', x.comb.y(.gene.weights, geneWeights), envir = .main.envir)
-    
-    computeTermSig(group.test, setdiff(termChildren, sig.termChildren))
-  }
-  
-  ##----------------------------------------------------------------------
-  
-  goDAG.r2l <- reverseArch(goDAG)
-  ## get the levels list 
-  nodeLevel <- buildLevels(goDAG.r2l, leafs2root = FALSE)
-  levelsLookUp <- nodeLevel$level2nodes
-
-  ## the annotations of the genes to GO
-  currAnno <- .genesInNode(goDAG, nodes(goDAG))
-
-  ## we use a lookup table to search for nodes that we have weighted the genes 
-  aux <- lapply(currAnno,
-                function(x) {
-                  gw <- numeric(length(x)) + 1
-                  names(gw) <- x
-                  return(gw)
-                })
-  upNodes.LookUP <- l2e(aux, new.env(hash = T, parent = emptyenv()))
-  
-  if(swJoinHT == TRUE)
-    downNodes.LookUP <- upNodes.LookUP
-  else
-    downNodes.LookUP <- copyEnv(upNodes.LookUP)
-  
-  ## we also use a hash table to store the result
-  sigList <- new.env(hash = T, parent = emptyenv())
-  
-  ## we will use frequently the children
-  allChildren <- adj(goDAG.r2l, nodes(goDAG))
-  
-
-  ## START
-  .main.envir <- environment()
-  
-  for(i in nodeLevel$noOfLevels:1) {
-    currNodes.names <- get(as.character(i), envir = levelsLookUp, mode = 'character')
-
-    ## some messages
-    cat(paste("\n\t Level ", i, ":\t", length(currNodes.names), " nodes to be scored.\n", sep =""))
-
-    for(termID in currNodes.names) {
-      ## take the IDs of the gene in the current node
-      ## we store the termID in the "name" slot of the test.stat
-      group.test <- updateGroup(test.stat, name = termID, members = currAnno[[termID]])
-
-      .gene.weights <- NULL
-      ## look at all children of node u and compute the significance
-      computeTermSig(group.test, allChildren[[termID]])
-
-      if(!is.null(.gene.weights)) {
-        ## get the upper induced subgraph from 'u' (including 'u')
-        NodesUpSubgraph <- nodesInInducedGraph(goDAG, termID)
-        ## set the weights for all the nodes
-
-        lapply(setdiff(nodesUpSubgraph, termID), setGeneWeights, .gene.weights, upNodes.LookUP)
-      }
-    }
-  }
-  
-  return(unlist(as.list(sigList)))
-}
-
-
 
 
 

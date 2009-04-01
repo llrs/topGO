@@ -20,7 +20,7 @@ reverseArch <- function(dirGraph,
     return(dirGraph)
   }
      
-  if(useAlgo == 'sparse') {
+  if(useAlgo == "sparse") {
     nodNames <- nodes(dirGraph)
     return(sparseM2Graph(t(graph2SparseM(dirGraph, useWeights)),
                          nodNames, edgemode = "directed"))

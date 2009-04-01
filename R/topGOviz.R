@@ -1,4 +1,27 @@
-## this file contains code for visualizing the GO DAG
+## this file contains code for visualizing the GO DAG and other ploting functions ....
+
+showGroupDensity <- function(object, whichGO, ranks = FALSE, rm.one = TRUE) {
+
+  groupMembers <- genesInTerm(object, whichGO)[[1]]
+  
+  allS <- geneScore(object, use.names = TRUE)
+  if(rm.one)
+    allS <- allS[allS < 0.99]
+    
+  xlab <- "Gene' score"
+  if(ranks) {
+    allS <- rank(allS, ties.method = "random")
+    xlab <- "Gene's rank" 
+  }
+  
+  group <- as.integer(names(allS) %in% groupMembers)
+  xx <- data.frame(score = allS,
+                   group = factor(group,
+                     labels = paste(c("complementary", whichGO), "  (", table(group), ")", sep = "")))
+  
+  return(densityplot( ~ score | group, data = xx, layout = c(1, 2), xlab = xlab))
+}
+
 
 
 .ps2eps <- function(filename) {
@@ -20,7 +43,7 @@ setMethod("printGraph",
           function(object, result, firstSigNodes = 10, fn.prefix = "",
                    useInfo = "def", pdfSW = FALSE) {
 
-            out.fileName <- paste(fn.prefix, testClass(result), firstSigNodes, useInfo, sep = '_')              
+            out.fileName <- paste(fn.prefix, algorithm(result), firstSigNodes, useInfo, sep = '_')              
             ## .DOT.FILE.NAME <<- paste(out.fileName, 'dot', sep = '.')
                
             if(pdfSW)
@@ -48,7 +71,7 @@ setMethod("printGraph",
           function(object, result, firstSigNodes = 10, refResult,
                    fn.prefix = "", useInfo = "def", pdfSW = FALSE) {
 
-            out.fileName <- paste(fn.prefix, testClass(result), testClass(refResult),
+            out.fileName <- paste(fn.prefix, algorithm(result), algorithm(refResult),
                                   firstSigNodes, useInfo, sep = '_')              
             ## .DOT.FILE.NAME <<- paste(out.fileName, 'dot', sep = '.')
                
