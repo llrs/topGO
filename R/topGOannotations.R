@@ -54,10 +54,21 @@ annFUN.db <- function(whichOnto, feasibleGenes = NULL, affyLib) {
   affyLib <- paste(sub(".db$", "", affyLib), ".db", sep = "")
   require(affyLib, character.only = TRUE) || stop(paste("package", affyLib, "is required", sep = " "))
   affyLib <- sub(".db$", "", affyLib)
+
+  ##Added some code to make the join work again.
+  orgPkg =get(paste( gsub(".db","",affyLib),"ORGPKG",sep=""))
+  orgFile= get(paste(orgPkg,"_dbfile",sep=""))
+  try(dbGetQuery(get(paste(affyLib, "dbconn", sep = "_"))(),
+                 paste("ATTACH '", orgFile(), "' as org;", sep ="")),
+                 silent = TRUE)
+  .sql <- paste("SELECT DISTINCT probe_id, go_id FROM probes INNER JOIN
+                  (SELECT * FROM org.genes INNER JOIN org.go_",
+                  tolower(whichOnto)," USING('_id')) USING('gene_id');", sep = "")
+
+##   .sql <- paste("SELECT DISTINCT probe_id, go_id FROM probes INNER JOIN ",
+##                 paste("go", tolower(whichOnto), sep = "_"),
+##                 " USING(_id)", sep = "")
   
-  .sql <- paste("SELECT DISTINCT probe_id, go_id FROM probes INNER JOIN ",
-                paste("go", tolower(whichOnto), sep = "_"),
-                " USING(_id)", sep = "")
   retVal <- dbGetQuery(get(paste(affyLib, "dbconn", sep = "_"))(), .sql)
 
   ## restric to the set of feasibleGenes
