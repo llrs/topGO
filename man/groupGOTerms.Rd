@@ -39,7 +39,7 @@ groupGOTerms(where)
 
 \seealso{
   \code{\link{topGOdata-class}},
-  \code{\link[GO]{GOTerm}}
+  \code{\link[GO.db]{GOTERM}}
 }
 
 \examples{
