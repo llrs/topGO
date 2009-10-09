@@ -41,14 +41,15 @@
 
   
 \title{Classes "elimCount" and "weight01Count"}
-\description{	 ~~ A concise (1-5 lines) description of what the class is.  ~~}
+\description{Classes that extend the "classicCount" class by adding 
+  a slot representing the members that need to be removed.}
 
 \section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("elimCount", testStatistic, name, allMembers, groupMembers, sigMembers, elim, cutOff, ...)}.
-	 ~~ describe objects here ~~ 
+  Objects can be created by calls of the form \code{new("elimCount", testStatistic, name, allMembers, groupMembers, sigMembers, elim, cutOff, ...)}.
 }
+
 \section{Slots}{
-	 \describe{
+  \describe{
     \item{\code{elim}:}{Object of class \code{"integer"} ~~ }
     \item{\code{cutOff}:}{Object of class \code{"numeric"} ~~ }
     \item{\code{significant}:}{Object of class \code{"integer"} ~~ }
@@ -60,16 +61,11 @@ Objects can be created by calls of the form \code{new("elimCount", testStatistic
   }
 }
 \section{Extends}{
-Class \code{"\linkS4class{classicCount}"}, directly.
+  Class \code{"\linkS4class{classicCount}"}, directly.
 Class \code{"\linkS4class{groupStats}"}, by class "classicCount", distance 2.
 }
 \section{Methods}{
-No methods defined with class "elimCount" in the signature.
-}
-
-\details{
-  TODO: Some datails here.....
-  
+  No methods defined with class "elimCount" in the signature.
 }
 
 \author{Adrian Alexa}
@@ -78,10 +74,6 @@ No methods defined with class "elimCount" in the signature.
   \code{\link{classicScore-class}},
   \code{\link{groupStats-class}},
   \code{\link{getSigGroups-methods}}
-}
-
-\examples{
-##---- Should be DIRECTLY executable !! ----
 }
 
 \keyword{classes}

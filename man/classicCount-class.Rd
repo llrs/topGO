@@ -20,7 +20,8 @@
 
 \title{Class "classicCount"}
 \description{This class that extends the virtual class "groupStats" by adding 
-  a slot representing the significant members. ....}
+  a slot representing the significant members.}
+
 \section{Objects from the Class}{
   Objects can be created by calls of the form
   \code{new("classicCount",
@@ -30,6 +31,7 @@
     groupMembers = "character",
     sigMembers = "character")}.
 }
+
 \section{Slots}{
 	 \describe{
     \item{\code{significant}:}{Object of class \code{"integer"} ~~ }
@@ -39,9 +41,11 @@
     \item{\code{testStatistic}:}{Object of class \code{"function"} ~~ }
   }
 }
+
 \section{Extends}{
 Class \code{"groupStats"}, directly.
 }
+
 \section{Methods}{
   \describe{
     \item{contTable}{\code{signature(object = "classicCount")}: ... }
@@ -55,8 +59,8 @@ Class \code{"groupStats"}, directly.
 }
 
 \details{
-  TODO: Some datails here.....
-  
+  This class is used for test statistic based on counts, like Fisher's
+  exact test
 }
 
 \author{Adrian Alexa}

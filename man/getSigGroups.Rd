@@ -25,34 +25,53 @@
 \alias{whichTests}
 
 
-%- Also NEED an '\alias' for EACH other topic documented here.
-
-\title{Algorithms for scoring GO terms}
+\title{Interfaces for running the enrichment tests}
 
 \description{
-  TODO: This function is use for dispatching each algorithm
+  These function are used for dispatching the specific algorithm for
+  a given \code{topGOdata} object and a test statistic.
 }
 
 \usage{
 getSigGroups(object, test.stat, ...)
+runTest(object, algorithm, statistic, ...)
+whichAlgorithms()
+whichTests()
 }
 
-%- maybe also 'usage' for other objects documented here.
 
 \arguments{
-  \item{object}{ ~~Describe \code{object} here~~ }
-  \item{test.stat}{ ~~Describe \code{test.stat} here~~ }
-  \item{\dots}{ ~~Describe \code{\dots} here~~ }
+  \item{object}{An object of class \code{topGOdata}
+    This object contains all data necessary for runnig the test.}
+
+  \item{test.stat}{An object of class \code{groupStats}. This object
+    defines the test statistic.}
+  
+  \item{algorithm}{Character string specifing which algorithm to use.} 
+  
+  \item{statistic}{Character string specifing which test to use.} 
+  
+  \item{\dots}{Other parameters. In the case of \code{runTest} they are
+    used for defining the test statistic}
 }
+
+
 \details{
-  ~~ If necessary, more details than the description above ~~
-}
-\value{
-  ~Describe the value returned
-  If it is a LIST, use
-  \item{comp1 }{Description of 'comp1'}
-  \item{comp2 }{Description of 'comp2'}
+  
+  The \code{runTest} function can be used only with a predefined set of
+  test statistics and algorithms. The algorithms and the statistical
+  tests which are accessible via the \code{runTest} function are shown
+  by the \code{whichAlgorithms()} and \code{whichTests()} functions.
+
+  The runTest function is a warping of the \code{getSigGroups} and the
+  initialisation of a \code{groupStats} object functions.
+  
   ...
+}
+
+
+\value{
+  An object of class \code{topGOresult}.
 }
 
 
@@ -60,17 +79,45 @@ getSigGroups(object, test.stat, ...)
 
 \seealso{
   \code{\link{topGOdata-class}},
-  \code{\link{classicCount-class}},
-  \code{\link{classicScore-class}}
+  \code{\link{groupStats-class}},
+  \code{\link{topGOresult-class}}
 }
 
-\examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
 
-## The function is currently defined as
-function(object, test.stat, ...) standardGeneric("getSigGroups")
+
+\examples{
+
+## load a sample topGOdata object
+data(GOdata)
+GOdata
+
+##############################
+## getSigGroups interface
+##############################
+
+## define a test statistic
+test.stat <- new("classicCount", testStatistic = GOFisherTest, name = "Fisher test")
+## perform the test
+resultFis <- getSigGroups(GOdata, test.stat)
+resultFis
+
+
+
+##############################
+## runTest interface
+##############################
+
+## Enrichment analysis by using the "classic" method and Fisher's exact test
+resultFis <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+resultFis
+
+## weight01 is the default algorithm 
+weight01.fisher <- runTest(GOdata, statistic = "fisher")
+weight01.fisher
+
+
+## not all combinations are possible!
+# weight.ks <- runTest(GOdata, algorithm = "weight", statistic = "t")
 }
 
 \keyword{methods}

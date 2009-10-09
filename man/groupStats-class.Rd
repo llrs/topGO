@@ -35,19 +35,22 @@
 
 
 \title{ Class "groupStats"}
-\description{A virtual class containing basic group (GO term) data: gene
-  names, genes scores, etc...
+\description{A virtual class containing basic gene set information:
+  the gene universe, the member of the current group, the test statistic
+  defined for this group, etc. 
 }
 
 \section{Objects from the Class}{A virtual Class: No objects may be created from it.}
 \section{Slots}{
-	 \describe{
+  \describe{
     \item{\code{name}:}{Object of class \code{"character"} ~~ }
     \item{\code{allMembers}:}{Object of class \code{"character"} ~~ }
     \item{\code{members}:}{Object of class \code{"character"} ~~ }
     \item{\code{testStatistic}:}{Object of class \code{"function"} ~~ }
+    \item{\code{testStatPar}:}{Object of class \code{"ANY"} ~~ }      
   }
 }
+
 \section{Methods}{
   \describe{
     \item{allMembers<-}{\code{signature(object = "groupStats")}: ... }
@@ -63,6 +66,7 @@
     \item{testStatistic}{\code{signature(object = "groupStats")}: ... }
 	 }
 }
+
 \author{Adrian Alexa}
 
 \seealso{
@@ -70,7 +74,4 @@
   \code{\link{getSigGroups-methods}}
 }
 
-\examples{
-##---- Should be DIRECTLY executable !! ----
-}
 \keyword{classes}

@@ -67,7 +67,7 @@ if(!isGeneric("printGenes"))
 setMethod("printGenes",
           signature(object = "topGOdata", whichTerms = "character", file = "missing"),
           function(object, whichTerms, chip, numChar = 100, simplify = TRUE,
-                   geneCufOff = 50, pvalCutOff) { 
+                   geneCutOff = 50, pvalCutOff) { 
             
             term.genes <- genesInTerm(object, whichTerms)
             all.genes <- character()
@@ -99,7 +99,7 @@ setMethod("printGenes",
               }
 
               ## we restrict the output to the number of genes
-              length(affID) <- min(length(affID), geneCufOff)
+              length(affID) <- min(length(affID), geneCutOff)
               
               ## if there are no genes, there is nothing to print
               if(length(affID) == 0) {
@@ -216,6 +216,11 @@ setMethod("GenTable",
             ## first for the class of the elements in the list
             if(!all(sapply(resList, is, "topGOresult")))
               stop("Use: topGOdata, topGOresult_1, topGOresult_2, ..., \"parameters\".")
+            
+            ## if no names were provided we name them
+            if(is.null(names(resList)))
+              names(resList) <- paste("result", 1:length(resList), sep = "")
+
             ## obtain the score from the objects
             resList <- lapply(resList, score)
             

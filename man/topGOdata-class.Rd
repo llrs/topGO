@@ -15,8 +15,7 @@
 \alias{geneSelectionFun}
 \alias{genes}
 \alias{genesInTerm}
-\alias{genTable}
-\alias{GenTable}
+
 \alias{graph<-}
 \alias{graph}
 \alias{numGenes}
@@ -57,8 +56,6 @@
 \alias{genes,topGOdata-method}
 \alias{genesInTerm,topGOdata,character-method}
 \alias{genesInTerm,topGOdata,missing-method}
-\alias{genTable,topGOdata,list-method}
-\alias{GenTable,topGOdata-method}
 \alias{graph<-,topGOdata-method}
 \alias{graph,topGOdata-method}
 \alias{initialize,topGOdata-method}
@@ -103,7 +100,11 @@
     \item{\code{allScores}:}{Object of class \code{"ANY"} ~~ }
     \item{\code{geneSelectionFun}:}{Object of class \code{"function"} ~~ }
     \item{\code{feasible}:}{Object of class \code{"logical"} ~~ }
+    \item{\code{nodeSize}:}{Object of class \code{"integer"} ~~ }
     \item{\code{graph}:}{Object of class \code{"graphNEL"} ~~ }
+    \item{\code{expressionMatrix}:}{Object of class \code{"matrix"} ~~ }
+    \item{\code{phenotype}:}{Object of class \code{"factor"} ~~ }
+    
   }
 }
 
@@ -134,8 +135,6 @@
         
     \item{genesInTerm}{\code{signature(object = "topGOdata", whichGO = "character")}: ... }
     \item{genesInTerm}{\code{signature(object = "topGOdata", whichGO = "missing")}: ... }
-    \item{genTable}{\code{signature(object = "topGOdata", resList = "list")}: ... }
-    \item{GenTable}{\code{signature(object = "topGOdata", ...)}: ... }
     \item{getSigGroups}{\code{signature(object = "topGOdata", test.stat = "classicCount")}: ... }
     \item{getSigGroups}{\code{signature(object = "topGOdata", test.stat = "classicScore")}: ... }
     \item{graph<-}{\code{signature(object = "topGOdata")}: ... }
@@ -162,32 +161,12 @@
 }
 
 \examples{
-## load the ALL dataset and the annotation library
-library(ALL); data(ALL)
-affyLib <- paste(annotation(ALL), "db", sep = ".")
+## load the dataset 
+data(geneList)
 library(package = affyLib, character.only = TRUE)
-
-library(genefilter)
-f1 <- pOverA(0.25, log2(100))
-f2 <- function(x) (IQR(x) > 0.5)
-ff <- filterfun(f1, f2)
-ALL <- ALL[genefilter(ALL, ff), ]
-
-## obtain the list of differentially expressed genes
-## discriminate B-cell from T-cell
-classLabel <- as.integer(sapply(ALL$BT, function(x) return(substr(x, 1, 1) == 'T')))
-
-## over-expressed genes for T-cell samples
-geneList <- getPvalues(exprs(ALL), classlabel = classLabel)
 
 ## the distribution of the adjusted p-values
 hist(geneList, 100)
-hist(geneList[geneList < 1], 100)
-
-## define a function to select the "significant" genes
-topDiffGenes <- function(allScore) {
-  return(allScore < 0.01)
-}
 
 ## how many differentially expressed genes are:
 sum(topDiffGenes(geneList))
@@ -206,6 +185,7 @@ GOdata
 
 ##########################################################
 ## Examples on how to use the methods
+##########################################################
 
 ## description of the experiment
 description(GOdata)

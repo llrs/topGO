@@ -7,24 +7,9 @@
 
 
 
-\title{Utility functions for Directed Acyclic Graphs (DAG)}
+\title{Utility functions to work with Directed Acyclic Graphs (DAG)}
 
-\description{
-
-  Determines the levels of a Directed Acyclic Graph (DAG)
-
-  
-  TODO: This function take the a directed graph and constructs a named
-  vector which contain the level on which a node is. The root has level
-  1.
-
-  TODO: Find the root(roots) of the DAG
-
-  TODO: Simple function to invert the direction of edges in an directed graph.
-  The returned graph is of class graphNEL.
-  It can use either simple matrices or sparse matrices (SparseM library)
-
-}
+\description{Basic functions to work witg DAGs}
 
 \usage{
 buildLevels(dag, root = NULL, leafs2root = TRUE)
@@ -35,25 +20,47 @@ reverseArch(dirGraph, useAlgo = "sparse", useWeights = TRUE)
 
 
 \arguments{
-  \item{dag}{ ~~Describe \code{dag} here~~ }
-  \item{root}{ ~~Describe \code{root} here~~ }
+  \item{dag}{A \code{graphNEL} object.}
+  
+  \item{root}{A character vector specifing the root(s) of the DAG. If
+    not specified the root node is autmatically computed.}
+
   \item{leafs2root}{The leafs2root parameter tell if the graph has edges
     directed from the leaves to the root, or vice-versa}
-  \item{graphLevels}{ ~~Describe \code{graphLevels} here~~ }  
+
+  \item{graphLevels}{An object of type list, returned by the \code{buildLevels} function.}  
   
-  \item{dirGraph}{The graph to be transformed }
-  \item{useAlgo}{"sparse" or "normal"}
-  \item{useWeights}{If weights should be used (if useAlgo = 'normal' that the weigths are used anyway)}
+  \item{dirGraph}{A \code{graphNEL} object containing a directed graph.}
   
+  \item{useAlgo}{A character string specifing one of the following options
+    \code{c("sparse", "normal")}. By default, \code{useAlgo = "sparse"}, a sparce matrix object is
+    used to transpose the adjacency matrix. Otherwise a standard R
+    martix is used.}
+  
+  \item{useWeights}{If weights should be used (if \code{useAlgo =
+      "normal"} then the weigths are used anyway)}
 }
 
 
 \details{
-  .....
+  \code{buildLevels} function determines the levels of a Directed
+  Acyclic Graph (DAG). The level of a node is defined as the longest
+  path from the node to the root. The function take constructs a named
+  list containg varios information about each nodes level. The root has
+  level 1.
+
+  \code{getNoOfLevels} - a convenient function to extract the number of
+  levels from the object returned by \code{buildLevels}
+  
+  \code{getGraphRoot} finds the root(s) of the DAG
+
+  \code{reverseArch} - simple function to invert the direction of edges
+  in a DAG. The returned graph is of class graphNEL.  It can use either
+  simple matrices or sparse matrices (SparseM library)
 }
 
 \value{
-  it returns a list containing:
+  \code{buildLevels} returns a list containing:
   \item{level2nodes}{Environment where the key is the level number
     with the value being the nodes on that level.}
   \item{nodes2level}{Environment where the key is the node label (the GO

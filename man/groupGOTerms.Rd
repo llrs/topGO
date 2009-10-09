@@ -5,12 +5,12 @@
 \alias{GOBPTerm}
 \alias{GOMFTerm}
 
-%- Also NEED an '\alias' for EACH other topic documented here.
-\title{ ~~function to do ... ~~ }
+
+\title{Grouping of GO terms into the three ontologies}
 \description{
-  TODO: Function that split GOTERM in different ontologies.
-  Every new environment contain only the terms from one
-  of the ontologies 'BP', 'CC', 'MF'
+  This function split the GOTERM environment into three different
+  ontologies. The newly created environments contain each only
+  the terms from one of the following ontologies 'BP', 'CC', 'MF'
 }
 
 \usage{
@@ -18,20 +18,11 @@ groupGOTerms(where)
 }
 
 \arguments{
-  \item{where}{The the environment where you wantto bind the results}
-}
-
-%- maybe also 'usage' for other objects documented here.
-\details{
-  ~~ If necessary, more details than the description above ~~
+  \item{where}{The the environment where you want to bind the results.}
 }
 
 \value{
-  ~Describe the value returned
-  If it is a LIST, use
-  \item{comp1 }{Description of 'comp1'}
-  \item{comp2 }{Description of 'comp2'}
-  ...
+  The function returns NULL.
 }
 
 
@@ -39,7 +30,7 @@ groupGOTerms(where)
 
 \seealso{
   \code{\link{topGOdata-class}},
-  \code{\link[GO.db]{GOTERM}}
+  \code{\link[GO.db:GOTERM]{GOTERM}}
 }
 
 \examples{

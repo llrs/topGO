@@ -53,7 +53,7 @@ setMethod("printGraph",
             
             ## plot the graph to the specified device
             par(mai = rep(0, 4))
-            gT <- showSigOfNodes(object, score(result), firstTerms = firstSigNodes,
+            gT <- showSigOfNodes(object, score(result), firstSigNodes = firstSigNodes,
                                  swPlot = FALSE, useInfo = useInfo, plotFunction = GOplot)
             plot(gT$complete.dag)
             dev.off()
@@ -83,7 +83,7 @@ setMethod("printGraph",
             ## plot the graph to the specified device
             par(mai = rep(0, 4))
             wN <- names(sort(score(refResult))[1:firstSigNodes])
-            gT <- showSigOfNodes(object, score(result), firstTerms = firstSigNodes,
+            gT <- showSigOfNodes(object, score(result), firstSigNodes = firstSigNodes,
                                  wantedNodes = wN, swPlot = FALSE, useInfo = useInfo,
                                  oldSigNodes = score(refResult), plotFunction = GOplot)
             plot(gT$complete.dag)
@@ -333,7 +333,7 @@ GOplot.counts <- function(dag, wantedNodes, dag.name = 'GO terms',
 
 
 
-## putWN     -- the graph is generated with from the firstTerms and the
+## putWN     -- the graph is generated with from the firstSigNodes and the
 ##              wanted Nodes
 ## putCL     -- we generate the graph from the nodes given by all previous
 ##              parameters, plus their children. if putCL = 1 than only the 
@@ -342,8 +342,8 @@ GOplot.counts <- function(dag, wantedNodes, dag.name = 'GO terms',
 ## type      -- used for ploting pie charts
 ## swPlot    -- if true the graph is ploted, if not no ploting is done.
 ## useInfo   -- aditional info to be ploted for a node
-showSigOfNodes <- function(GOdata, termsP.value, firstTerms = 10, reverse = TRUE,
-                           sig.for.all = TRUE, wantedNodes = NULL, putWN = TRUE,
+showSigOfNodes <- function(GOdata, termsP.value, firstSigNodes = 10, reverse = TRUE,
+                            sigForAll = TRUE, wantedNodes = NULL, putWN = TRUE,
                            putCL = 0, type = NULL, showEdges = TRUE, swPlot = TRUE,
                            useFullNames = TRUE, oldSigNodes = NULL,
                            useInfo = c('none', 'pval', 'counts', 'def', 'np', 'all')[1],
@@ -351,8 +351,8 @@ showSigOfNodes <- function(GOdata, termsP.value, firstTerms = 10, reverse = TRUE
 
   require('Rgraphviz') || stop('package Rgraphviz is required')
 
-  if(!is.null(firstTerms)) 
-    sigTerms <- sort(termsP.value)[1:firstTerms]
+  if(!is.null(firstSigNodes)) 
+    sigTerms <- sort(termsP.value)[1:firstSigNodes]
   else
     sigTerms <- numeric(0)
   
@@ -411,7 +411,7 @@ showSigOfNodes <- function(GOdata, termsP.value, firstTerms = 10, reverse = TRUE
                      )
     
   ## we can plot the significance level of all nodes in the dag or for the sigNodes
-  if(sig.for.all)
+  if(sigForAll)
     sigNodes <- termsP.value[nodes(dag)]
   else
     sigNodes <- sigTerms

@@ -4,11 +4,10 @@
 \alias{nodesInInducedGraph}
 
 
-
-\title{ ~~function to do ... ~~ }
+\title{The subgraph induced by a set of nodes.}
 \description{
-  TODO: Given a GO term (or a list of GO terms) this function is returning
-  the subgraph induced by node.
+  Given a set of nodes (GO terms) this function is returning
+  the subgraph containing these nodes and their ancestors.
 }
 
 \usage{
@@ -16,15 +15,10 @@ inducedGraph(dag, startNodes)
 nodesInInducedGraph(dag, startNodes)
 }
 
-%- maybe also 'usage' for other objects documented here.
-
 \arguments{
-  \item{dag}{ ~~Describe \code{dag} here~~ }
-  \item{startNodes}{ ~~Describe \code{startNodes} here~~ }
-}
-
-\details{
-  ~~ If necessary, more details than the description above ~~
+  \item{dag}{An object of class \code{graphNEL} containing a directed
+    graph.}
+  \item{startNodes}{A character vector giving the starting nodes.}
 }
 
 \value{
@@ -39,10 +33,19 @@ nodesInInducedGraph(dag, startNodes)
 }
 
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
+data(GOdata)
 
+## the GO graph
+g <- graph(GOdata)
+g
+
+## select 10 random nodes
+sn <- sample(nodes(g), 10)
+
+
+## the subgraph induced by these nodes
+sg <- inducedGraph(g, sn)
+sg
 }
 
 \keyword{graphs}

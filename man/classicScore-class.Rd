@@ -24,14 +24,13 @@
 
 
 \title{Class "classicScore"}
-\description{
-  TODO: A class that extends the virtual class groupStats by adding 
-  a slot representing the score of each gene. (used for KS test)
+\description{A class that extends the virtual class "groupStats" by adding 
+  a slot representing the score of each gene. It is used for tests like
+  Kolmogorov-Smirnov test.
 }
 
 \section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("classicScore", testStatistic, name, allMembers, groupMembers, score, decreasing)}.
-	 ~~ describe objects here ~~ 
+  Objects can be created by calls of the form \code{new("classicScore", testStatistic, name, allMembers, groupMembers, score, decreasing)}.
 }
 
 \section{Slots}{
@@ -41,6 +40,8 @@ Objects can be created by calls of the form \code{new("classicScore", testStatis
     \item{\code{allMembers}:}{Object of class \code{"character"} ~~ }
     \item{\code{members}:}{Object of class \code{"character"} ~~ }
     \item{\code{testStatistic}:}{Object of class \code{"function"} ~~ }
+    \item{\code{scoreOrder}:}{Object of class \code{"character"} ~~ }
+    \item{\code{testStatPar}:}{Object of class \code{"ANY"} ~~ }
   }
 }
 \section{Extends}{
@@ -69,7 +70,5 @@ Class \code{"groupStats"}, directly.
 \examples{
 ## define the type of test you want to use
 test.stat <- new("classicScore", testStatistic = GOKSTest, name = "KS tests")
-
-
 }
 \keyword{classes}

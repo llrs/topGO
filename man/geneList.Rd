@@ -2,6 +2,7 @@
 
 \alias{geneList}
 \alias{topDiffGenes}
+\alias{affyLib}
 
 
 \docType{data}

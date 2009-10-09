@@ -43,8 +43,8 @@
 
 
 \title{Classes "elimScore" and "weight01Score" }
-\description{	 ~~ A concise (1-5 lines) description of what the class is.  ~~}
-
+\description{Classes that extend the "classicScore" class by adding 
+  a slot representing the members that need to be removed.}
 
 \section{Objects from the Class}{
 Objects can be created by calls of the form \code{new("elimScore", testStatistic, name, allMembers, groupMembers, score, alternative, elim, cutOff, ...)}.
@@ -74,8 +74,7 @@ No methods defined with class "elimScore" in the signature.
 }
 
 \details{
-  TODO: 
-  
+  TODO:   
 }
 
 \author{Adrian Alexa}

@@ -654,7 +654,7 @@ setMethod("show", "topGOresult", function(object) .printTopGOresult(x = object))
 
 
 
-######################## groupInfo methods ########################
+######################## groupStats methods ########################
 
 setMethod("initialize", "groupStats",
           function(.Object, testStatistic, name, allMembers, groupMembers) {

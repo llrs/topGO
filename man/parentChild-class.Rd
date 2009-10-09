@@ -27,11 +27,13 @@
 
 
 \title{Classes "parentChild" and "pC"}
-\description{	 ~~ A concise (1-5 lines) description of what the class is.  ~~}
+\description{Classes that extend the "classicCount" class by adding 
+  support for the parent-child test.}
+
 \section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("parentChild", testStatistic, name, groupMembers, parents, sigMembers, joinFun, ...)}.
-	 ~~ describe objects here ~~ 
+  Objects can be created by calls of the form \code{new("parentChild", testStatistic, name, groupMembers, parents, sigMembers, joinFun, ...)}.
 }
+
 \section{Slots}{
 	 \describe{
     \item{\code{splitIndex}:}{Object of class \code{"integer"} ~~ }
@@ -78,4 +80,5 @@ Class \code{"\linkS4class{groupStats}"}, by class "classicCount", distance 2.
 showClass("parentChild")
 showClass("pC")
 }
+
 \keyword{classes}

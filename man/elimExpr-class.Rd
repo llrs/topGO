@@ -19,8 +19,10 @@
 \alias{numMembers,weight01Expr-method}
 
 
-\title{Class "elimExpr" ~~~ }
-\description{	 ~~ A concise (1-5 lines) description of what the class is.  ~~}
+\title{Class "elimExpr"}
+\description{Classes that extend the "classicExpr" class by adding 
+  a slot representing the members that need to be removed.}
+
 \section{Objects from the Class}{
 Objects can be created by calls of the form \code{new("elimExpr", testStatistic, name, groupMembers, exprDat, pType, elim, cutOff, ...)}.
 	 ~~ describe objects here ~~ 
@@ -55,7 +57,6 @@ Class \code{"\linkS4class{groupStats}"}, by class "weight01Expr", distance 3.
 
 \details{
   TODO: Some datails here.....
-  
 }
 
 \author{Adrian Alexa}

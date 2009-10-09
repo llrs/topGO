@@ -47,8 +47,7 @@
 
 
 \section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("weightCount", testStatistic, name, allMembers, groupMembers, sigMembers, weights, sigRatio, penalise, ...)}.
-	 ~~ describe objects here ~~ 
+  Objects can be created by calls of the form \code{new("weightCount", testStatistic, name, allMembers, groupMembers, sigMembers, weights, sigRatio, penalise, ...)}.
 }
 
 
@@ -67,32 +66,24 @@ Objects can be created by calls of the form \code{new("weightCount", testStatist
   }
 }
 \section{Extends}{
-Class \code{"\linkS4class{classicCount}"}, directly.
-Class \code{"\linkS4class{groupStats}"}, by class "classicCount", distance 2.
+  Class \code{"\linkS4class{classicCount}"}, directly.
+  Class \code{"\linkS4class{groupStats}"}, by class "classicCount", distance 2.
 }
 \section{Methods}{
-No methods defined with class "weightCount" in the signature.
+  No methods defined with class "weightCount" in the signature.
 }
 
 
 \details{
   TODO: Some details here.....
-  
-}
+  }
 
 \author{Adrian Alexa}
 
 \seealso{
-  \code{\link{classicScore-class}},
   \code{\link{groupStats-class}},
   \code{\link{getSigGroups-methods}}
 }
 
 
-
-
-      
-\examples{
-##---- Should be DIRECTLY executable !! ----
-}
 \keyword{classes}

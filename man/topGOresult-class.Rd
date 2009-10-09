@@ -36,35 +36,72 @@
 
 \title{Class "topGOresult"}
 
-\description{Class instance created by \code{\link{getSigGroups-methods}}}
+\description{Class instance created by
+  \code{\link{getSigGroups-methods}} or by \code{runTest}}
 
 \section{Objects from the Class}{
-  Objects can be created by calls of the form \code{new("topGOresult", description, score, testName, testClass)}.
+  Objects can be created by calls of the form \code{new("topGOresult",
+    description, score, testName, algorithm, geneData)}.
 }
 
 \section{Slots}{
   \describe{
-    \item{\code{description}:}{Object of class \code{"character"} ~~ }
-    \item{\code{score}:}{Object of class \code{"numeric"} ~~ }
-    \item{\code{testName}:}{Object of class \code{"character"} ~~ }
-    \item{\code{testClass}:}{Object of class \code{"character"} ~~ }
+    \item{\code{description}:}{character string containing a
+      short description on how the object was build.}
+    \item{\code{score}:}{named numerical vector containing the
+      p-values or the scores of the tested GO terms.}
+    \item{\code{testName}:}{character string containing the name
+      of the test statistic used.}
+    \item{\code{algorithm}:}{character string containing the name
+      of the algorithm used.}
+    \item{\code{geneData}:}{list containing summary statistics
+      on the genes/gene universe/annotations.}
   }
 }
 
 \section{Methods}{
   \describe{
+    \item{\code{score}:}{method to access the \code{score} slot.}
     
-    \item{\code{score}:}{ ~~describe this method here }
+    \item{\code{testName}:}{method to access the \code{testName} slot.}
+
+    \item{\code{algorithm}:}{method to access the \code{algorithm} slot.}
+
+    \item{\code{geneData}:}{method to access the \code{geneData} slot.}
+
+    \item{\code{show}:}{method to print the object.}
 }}
 
 
 \author{Adrian Alexa}
 
 \seealso{
-  \code{\link{classicScore-class}},
   \code{\link{groupStats-class}},
   \code{\link{getSigGroups-methods}}
 }
 
+\examples{
+
+data(results.tGO)
+
+s <- score(resultFisher)
+
+go <- sort(names(s))
+go.sub<- sample(go, 100)
+go.mixed <- c(sample(go, 50), sample(ls(GOCCTerm), 20))
+go.others <- sample(ls(GOCCTerm), 100)
+
+
+str(go)
+str(go.sub)
+str(go.mixed)
+str(go.others)
+
+str(score(resultFisher, whichGO = go))
+str(score(resultFisher, whichGO = go.sub))
+str(score(resultFisher, whichGO = go.mixed))
+str(score(resultFisher, whichGO = go.others))
+
+}
 
 \keyword{classes}

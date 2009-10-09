@@ -14,11 +14,12 @@
 \alias{pType<-,classicExpr-method}
 \alias{pType,classicExpr-method}
 
-\title{Class "classicExpr" ~~~ }
-\description{	 ~~ A concise (1-5 lines) description of what the class is.  ~~}
+\title{Class "classicExpr"}
+\description{This class that extends the virtual class "groupStats" by adding 
+  two slots for accomodating gene expression data.}
+
 \section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("classicExpr", testStatistic, name, groupMembers, exprDat, pType, ...)}.
-	 ~~ describe objects here ~~ 
+  Objects can be created by calls of the form \code{new("classicExpr", testStatistic, name, groupMembers, exprDat, pType, ...)}.
 }
 \section{Slots}{
 	 \describe{
@@ -44,7 +45,7 @@ Class \code{"\linkS4class{groupStats}"}, directly.
     \item{membersExpr}{\code{signature(object = "classicExpr")}: ... }
     \item{pType<-}{\code{signature(object = "classicExpr")}: ... }
     \item{pType}{\code{signature(object = "classicExpr")}: ... }
-	 }
+  }
 }
 
 \author{Adrian Alexa}

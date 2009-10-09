@@ -3,9 +3,9 @@
 \alias{getPvalues}
 
 
-\title{Function to compute p-values of a t-test for a gene expression matrix.}
-\description{Warping function for computing the p-vales for a gene
-  expression matrix.
+\title{Convenient function to compute p-values from a gene expression matrix.}
+\description{Warping function of "mt.teststat", for computing p-values
+  of a gene expression matrix.
 }
 
 \usage{
@@ -13,7 +13,6 @@
    genesID = NULL, correction = c("none", "Bonferroni", "Holm", "Hochberg", "SidakSS", "SidakSD",
    "BH", "BY")[8]) 
 }
-%- maybe also 'usage' for other objects documented here.
 
 \arguments{
   \item{edata}{Gene expression matrix.}
@@ -24,12 +23,8 @@
   \item{correction}{Multiple testing correction procedure}
 }
 
-\details{
-  ~~ If necessary, more details than the description above ~~
-}
-
 \value{
-  An named vector of p-values is returned.
+  An named numeric vector of p-values.
 }
 
 \author{Adrian Alexa}
