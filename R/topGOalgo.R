@@ -50,7 +50,7 @@ setMethod("runTest",
             if(algorithm == "parentchild")
               testType <- "pC"
             else {
-              testType <- as.character(getMethods(.testNames[statistic])@methods[[1]]@target)
+              testType <- as.character(findMethodSignatures(.testNames[statistic]))
               testType <- sub("classic", algorithm, testType) 
             }
             
