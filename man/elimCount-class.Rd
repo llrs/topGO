@@ -1,6 +1,7 @@
 \name{elimCount-class}
 \docType{class}
 
+\alias{leaCount-class}
 \alias{elimCount-class}
 \alias{weight01Count-class}
 
@@ -16,6 +17,13 @@
 \alias{elim<-,elimCount-method}
 \alias{elim<-,weight01Count-method}
 
+
+\alias{depth}
+\alias{depth,leaCount-method}
+\alias{depth<-}
+\alias{depth<-,leaCount-method}
+
+\alias{initialize,leaCount-method}
 \alias{initialize,elimCount-method}
 \alias{initialize,weight01Count-method}
 

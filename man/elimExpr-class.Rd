@@ -1,19 +1,24 @@
 \name{elimExpr-class}
 \docType{class}
 
+\alias{leaExpr-class}
 \alias{elimExpr-class}
 \alias{weight01Expr-class}
 
+\alias{depth,leaExpr-method}
+\alias{depth<-,leaExpr-method}
 
 \alias{cutOff<-,elimExpr-method}
 \alias{cutOff,elimExpr-method}
+
+\alias{initialize,leaExpr-method}
 \alias{initialize,elimExpr-method}
+\alias{initialize,weight01Expr-method}
 
 
 \alias{allMembers,weight01Expr-method}
 \alias{elim<-,weight01Expr-method}
 \alias{elim,weight01Expr-method}
-\alias{initialize,weight01Expr-method}
 \alias{members,weight01Expr-method}
 \alias{numAllMembers,weight01Expr-method}
 \alias{numMembers,weight01Expr-method}

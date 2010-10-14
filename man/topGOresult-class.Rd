@@ -32,6 +32,10 @@
 \alias{geneData<-,topGOresult-method}
 \alias{geneData,topGOresult-method}
 
+\alias{combineResults}
+
+
+
 
 
 \title{Class "topGOresult"}
@@ -70,6 +74,11 @@
     \item{\code{geneData}:}{method to access the \code{geneData} slot.}
 
     \item{\code{show}:}{method to print the object.}
+
+    \item{\code{combineResults}:}{method to aggregate two or more
+      topGOresult objects. \code{method = c("gmean", "mean", "median",
+      "min", "max")} provides the way the object scores (which most of
+      the time are p-values) are combined.}.
 }}
 
 
@@ -101,6 +110,10 @@ str(score(resultFisher, whichGO = go))
 str(score(resultFisher, whichGO = go.sub))
 str(score(resultFisher, whichGO = go.mixed))
 str(score(resultFisher, whichGO = go.others))
+
+avgResult <- combineResults(resultFisher, resultKS)
+avgResult
+combineResults(resultFisher, resultKS, method = "min")
 
 }
 

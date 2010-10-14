@@ -5,19 +5,20 @@
 ## High-level function for runing the GO algorithms
 
 
-.algoComp <- rbind(c(1, 0, 1, 1, 1, 0),
-                   c(1, 0, 1, 1, 1, 0),
-                   c(1, 0, 0, 0, 0, 0),
-                   c(1, 0, 1, 1, 1, 0),
-                   c(1, 0, 0, 0, 0, 0))
-rownames(.algoComp) <- c("classic", "elim", "weight", "weight01", "parentchild")
-colnames(.algoComp) <- c("fisher", "z", "ks", "t", "globaltest", "category")
+.algoComp <- rbind(c(1, 0, 1, 1, 1, 0, 1, 1),
+                   c(1, 0, 1, 1, 1, 0, 1, 1),
+                   c(1, 0, 0, 0, 0, 0, 0, 0),
+                   c(1, 0, 1, 1, 1, 0, 1, 1),
+                   c(1, 0, 1, 1, 1, 0, 1, 1),
+                   c(1, 0, 0, 0, 0, 0, 0, 0))
+rownames(.algoComp) <- c("classic", "elim", "weight", "weight01", "lea", "parentchild")
+colnames(.algoComp) <- c("fisher", "z", "ks", "t", "globaltest", "category", "sum", "ks.ties")
 
-.testNames <- c("GOFisherTest" , "GOKSTest", "GOtTest", "GOglobalTest")
-names(.testNames) <- c("fisher", "ks", "t", "globaltest")
+.testNames <- c("GOFisherTest" , "GOKSTest", "GOtTest", "GOglobalTest", "GOSumTest", "GOKSTiesTest")
+names(.testNames) <- c("fisher", "ks", "t", "globaltest", "sum", "ks.ties")
 
-.algoClass <- c("classic", "elim", "weight", "weight01", "parentchild")
-names(.algoClass) <- c("classic", "elim", "weight", "weight01", "parentchild")
+.algoClass <- c("classic", "elim", "weight", "weight01", "lea", "parentchild")
+names(.algoClass) <- c("classic", "elim", "weight", "weight01", "lea", "parentchild")
 
 
 ## functions to extract the information from the .algoComp
@@ -243,7 +244,7 @@ setMethod("getSigGroups",
               score(test.stat) <- geneScore(object, use.names = TRUE)
             }
 
-            GOlist <- genesInTerm(object)
+            GOlist <- usedGO(object)
             cat("\n\t\t\t -- Elim Algorithm -- \n")
             cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
             cat("\t\t parameters: \n")
@@ -274,7 +275,7 @@ setMethod("getSigGroups",
             if(length(allMembers(test.stat)) == 0) 
               stop("No expression data found")
             
-            GOlist <- genesInTerm(object)
+            GOlist <- usedGO(object)
             cat("\n\t\t\t -- Elim Algorithm -- \n")
             cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
             cat("\t\t parameters: \n")
@@ -356,7 +357,7 @@ setMethod("getSigGroups",
               score(test.stat) <- geneScore(object, use.names = TRUE)
             }
 
-            GOlist <- genesInTerm(object)
+            GOlist <- usedGO(object)
             cat("\n\t\t\t -- Weight01 Algorithm -- \n")
             cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
             cat("\t\t parameters: \n")
@@ -384,7 +385,7 @@ setMethod("getSigGroups",
             if(length(allMembers(test.stat)) == 0) 
               stop("No expression data found")
             
-            GOlist <- genesInTerm(object)
+            GOlist <- usedGO(object)
             cat("\n\t\t\t -- Weight01 Algorithm -- \n")
             cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
             cat("\t\t parameters: \n")
@@ -449,7 +450,6 @@ setMethod("getSigGroups",
                        algorithm = .whichAlgorithm,
                        geneData = c(.getGeneData(object), SigTerms = length(.sigTerms))))
           })
-
 
 
 
@@ -538,6 +538,130 @@ setMethod("getSigGroups",
                        geneData = c(.getGeneData(object), SigTerms = length(.sigTerms))))
           })
 
+
+
+
+########################## LEA algorithm ##########################
+## dispatch method for the LEA algorithm
+## to set the test statistic
+## test.stat <- new("leaCount", testStatistic = GOFisherTest, name = "Fisher test")
+setMethod("getSigGroups",
+          signature(object = "topGOdata", test.stat = "leaCount"),
+          function(object, test.stat, ...) { ## ... parameters for each algorithm
+            
+            ## update the test.stat object
+            allMembers(test.stat) <- genes(object)
+            sigMembers(test.stat) <- sigGenes(object)
+            
+            ## first take aside nodes that don't have any sig members
+            x <- termStat(object)
+            index <- x$Significant == 0
+            not.sigTerms <- rownames(x)[index]
+            .sigTerms <- rownames(x)[!index]
+            
+            cat("\n\t\t\t -- LEA Algorithm -- \n")
+            cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
+            cat("\t\t parameters: \n")
+            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            cat("\t\t\t neighborhood depth: ", depth(test.stat), "\n")
+
+            ## check if there is at least one nontrivial GO term !!!
+            if(length(.sigTerms) > 0) {
+              ## restrict the graph
+              g <- subGraph(.sigTerms, graph(object))
+              ## apply the algorithm
+              algoRes <- .sigGroups.LEA(g, test.stat)
+            } else {
+              algoRes <- numeric()
+              warning("No enrichment can pe performed - there are no feasible GO terms!")
+            }
+              
+            aux <- rep(1, length(not.sigTerms))
+            names(aux) <- not.sigTerms
+            algoRes <- c(algoRes, aux)
+  
+            .whichAlgorithm <- "LEA"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object),
+                         "\nOntology:", ontology(object),
+                         "\nneighborhood depth:", depth(test.stat), sep = " "),
+                       score = algoRes,
+                       testName = Name(test.stat), 
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(.sigTerms))))
+          })
+
+
+setMethod("getSigGroups",
+          signature(object = "topGOdata", test.stat = "leaScore"),
+          function(object, test.stat, ...) { ## ... parameters for each algorithm
+
+            ## update the test.stat object if there is the case
+            if(length(allScore(test.stat)) == 0) {
+              allMembers(test.stat) <- genes(object)
+              score(test.stat) <- geneScore(object, use.names = TRUE)
+            }
+
+            GOlist <- usedGO(object)
+            cat("\n\t\t\t -- LEA Algorithm -- \n")
+            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
+            cat("\t\t parameters: \n")
+            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            cat("\t\t\t neighborhood depth: ", depth(test.stat), "\n")
+            cat("\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"), "\n")
+            
+            ## apply the algorithm
+            algoRes <- .sigGroups.LEA(graph(object), test.stat)
+            
+            .whichAlgorithm <- "LEA"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object),
+                         "\nOntology:", ontology(object),
+                         "\nneighborhood depth:", depth(test.stat), sep = " "),
+                       score = algoRes,
+                       testName = Name(test.stat), 
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(GOlist))))
+
+          })
+
+
+setMethod("getSigGroups",
+          signature(object = "topGOdata", test.stat = "leaExpr"),
+          function(object, test.stat, ...) { ## ... parameters for each algorithm
+            
+            ## update the test.stat object if there is the case
+            if(length(allMembers(test.stat)) == 0) 
+              stop("No expression data found")
+            
+            GOlist <- usedGO(object)
+            cat("\n\t\t\t -- LEA Algorithm -- \n")
+            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
+            cat("\t\t parameters: \n")
+            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            cat("\t\t\t neighborhood depth: ", depth(test.stat), "\n")
+            
+            ## apply the algorithm
+            algoRes <- .sigGroups.LEA(graph(object), test.stat)
+            
+            .whichAlgorithm <- "LEA"
+            attr(.whichAlgorithm, "testClass") <- as.character(class(test.stat))
+            return(new("topGOresult",
+                       description = paste(description(object),
+                         "\nOntology:", ontology(object),
+                         "\nneighborhood depth:", depth(test.stat), sep = " "),
+                       score = algoRes,
+                       testName = Name(test.stat), 
+                       algorithm = .whichAlgorithm,
+                       geneData = c(.getGeneData(object), SigTerms = length(GOlist))))
+          })
+
+
+
+#############################################################################################################
+#############################################################################################################
 
 
 ########################## CLASSIC algorithm ##########################
@@ -999,3 +1123,84 @@ setMethod("getSigGroups",
   return(unlist(as.list(sigList)))
 }
 
+
+
+########################## LEA algorithm ##########################
+.sigGroups.LEA <- function(goDAG, test.stat, LEA.class.pref = "lea") {
+
+  allAnno <- .genesInNode(goDAG, nodes(goDAG))
+
+  ## just to be sure there are no random genes in the elim slot
+  elim(test.stat) <- character(0)
+  group.test <- test.stat
+  
+  ## get the classic significance
+  cat("\n\t Computing classical p-values ...\n")
+  class(test.stat) <- sub(LEA.class.pref, "classic", class(test.stat))
+  classicPval <- sapply(allAnno,
+                        function(term) {
+                          members(test.stat) <- term
+                          return(runTest(test.stat))
+                        })
+    
+  ## newPval are the corrected p-values, where nedded
+  newPval <- classicPval
+
+  ## keep the nodes to be further explored in a queue,
+  ## and initiallze the queue with the root node
+  rootNode <- getGraphRoot(goDAG)
+  bestCounter <- 0 # counts the number of nodes with a better score then its children
+ 
+  ## make the edges point from the root to the leafs
+  goDAG <- reverseArch(goDAG)
+  ## save the adjacent nodes (the children) into a list since will be faster to access them
+  usedNodes <- nodes(goDAG)
+  chList <- adj(goDAG, usedNodes)
+  usedNodes <- usedNodes[sapply(chList, length) != 0]
+  
+  cat("\t Computing local p-values ...\n")
+  for(cNode in usedNodes) {
+
+    ## get the descendents of degree k of the current node 
+    ch <- chList[[cNode]]
+    i <- 1
+    while(length(ch) > 0 && i < depth(group.test)) {
+      ch <- unique(c(ch, unlist(chList[ch], use.names = FALSE)))
+      i <- i + 1
+    }
+      
+    ## check if the current node is a leaf -- should not happen though ... 
+    if(length(ch) == 0)
+      next
+    
+    ## we know that both cNode and ch are non empty
+    ## the only thing left to do is to compute the new score
+    optimCh <- ch[classicPval[ch] <= classicPval[cNode]] # the children with a better score then cNode
+
+    ## CASE I: cNode has a better score then all its children
+    if(length(optimCh) == 0) {
+      bestCounter <- bestCounter + 1
+      next
+    }
+
+    ################################################################################
+    ## CASE II: at least one child has a better score then cNode, namely all optimCh
+
+    ## check if the node has a very bad score (p-value ~ 1)
+    ## this will happen seldom, but might remove some computations ....
+    if(classicPval[cNode] > .9)
+      next
+    
+    ## from the test statistic
+    ## get the genes annotated to the children and set them as genes to be removed from cNode
+    test.stat <- updateGroup(group.test, name = cNode, members = allAnno[[cNode]])
+    elim(test.stat) <- unique(unlist(allAnno[optimCh], use.names = FALSE))
+    
+    newPval[cNode] <- max(classicPval[cNode], runTest(test.stat))
+    ##newPval[cNode] <- runTest(test.stat)
+  }
+
+  cat("\t\t", bestCounter, "local optimal nodes found\n\t\t", sum(classicPval != newPval), "corrected p-values \n")
+
+  return(newPval)
+}

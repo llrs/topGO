@@ -7,6 +7,9 @@
 \alias{getSigGroups,topGOdata,classicCount-method}
 \alias{getSigGroups,topGOdata,classicScore-method}
 \alias{getSigGroups,topGOdata,classicExpr-method}
+\alias{getSigGroups,topGOdata,leaCount-method}
+\alias{getSigGroups,topGOdata,leaScore-method}
+\alias{getSigGroups,topGOdata,leaExpr-method}
 \alias{getSigGroups,topGOdata,elimCount-method}
 \alias{getSigGroups,topGOdata,elimScore-method}
 \alias{getSigGroups,topGOdata,elimExpr-method}

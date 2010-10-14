@@ -211,7 +211,8 @@ GOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
     ## if we want to differentiate between 'part-of' and 'is-a' edges
     if(edgeTypes)
       ##    0 for a is_a relation,  1 for a part_of relation
-      edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'red')
+      ## edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'red')
+      edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'black')
   
 
   ##plot(dag, attrs = graphAttrs, nodeAttrs = nodeAttrs, edgeAttrs = edgeAttrs)
@@ -321,7 +322,8 @@ GOplot.counts <- function(dag, wantedNodes, dag.name = 'GO terms',
     ## if we want to differentiate between 'part-of' and 'is-a' edges
     if(edgeTypes)
       ##    0 for a is_a relation,  1 for a part_of relation
-      edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'red')
+      #edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'red')
+      edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'black')
   
   dagLayout <- agopen(graph = dag, name = dag.name, attrs = graphAttrs,
                       nodeAttrs = nodeAttrs,  edgeAttrs = edgeAttrs)
@@ -399,7 +401,7 @@ showSigOfNodes <- function(GOdata, termsP.value, firstSigNodes = 10, reverse = T
 
   .pval = pval.info(nodes(dag))
   .def = .getTermsDefinition(whichTerms = nodes(dag), ontology(GOdata), numChar = .NO.CHAR)
-  .counts = apply(termCounts[, c("Significant", "Annotated")], 1, paste, collapse = "/")
+  .counts = apply(termCounts[, c("Significant", "Annotated")], 1, paste, collapse = " / ")
   ## more infos will be added
   nodeInfo <- switch(useInfo,
                      none = NULL,
@@ -555,7 +557,8 @@ printDOT <- function(dag, sigNodes = NULL, genNodes = NULL, wantedNodes = NULL,
   else
     ## if we want to differentiate between 'part-of' and 'is-a' edges
     ##    0 for a is_a relation,  1 for a part_of relation
-    edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'red')
+    ##  edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'red')
+    edgeAttrs$color <- ifelse(.getEdgeWeights(dag) == 0, 'black', 'black')
   
 
   toDot(graph = dag, filename = export.to.dot.file,

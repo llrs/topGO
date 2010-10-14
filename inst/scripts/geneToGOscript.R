@@ -65,8 +65,8 @@ GOdata <- new("topGOdata",
 ## write the gene2GO[index] into a file to use as an example in the vignette
 a <- lapply(gene2GO[index], function(x) paste(x, collapse = ", "))
 mat <- cbind(names(a), unlist(a, use.names = FALSE))
-write.table(mat, file = "ensembl2go.map", quote = FALSE, sep = "\t",
+write.table(mat, file = "geneid2go.map", quote = FALSE, sep = "\t",
             row.names = FALSE, col.names = FALSE)
 
-fn <- system.file("examples/ensembl2go.map", package = "topGO")
+fn <- system.file("examples/geneid2go.map", package = "topGO")
 

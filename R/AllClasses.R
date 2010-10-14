@@ -190,3 +190,22 @@ setClass("parentChild", contains = "classicCount",
 setClass("pC", contains = "classicCount", 
          representation = representation(
            joinFun = "function"))
+
+
+
+
+##################### LEA classes #########################
+## used for LEA algorithm
+## basically the same class as weight01xxx but we need it for the dispatch mechanism 
+setClass("leaCount", contains = "weight01Count",
+         representation = representation(
+           depth = "integer"))
+
+setClass("leaScore", contains = "weight01Score",
+         representation = representation(
+           depth = "integer"))
+
+setClass("leaExpr", contains = "weight01Expr",
+         representation = representation(
+           depth = "integer"))
+

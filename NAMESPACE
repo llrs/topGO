@@ -9,6 +9,7 @@ exportClasses(topGOdata, topGOresult, groupStats,
               classicCount, classicScore, classicExpr,
               weight01Count, weight01Score, weight01Expr,
               elimCount, elimScore, elimExpr,
+              leaCount, leaScore, leaExpr,
               weightCount, pC, parentChild)
 
 exportMethods(initialize, description, ontology, allGenes, feasible, graph,
@@ -25,12 +26,14 @@ exportMethods(initialize, description, ontology, allGenes, feasible, graph,
               geneData, "geneData<-", "score<-", "testName<-", "algorithm<-",
               printGenes, penalise, scoreOrder, testStatPar, printGraph, GenTable,
               GOFisherTest, GOKSTest, GOtTest, GOglobalTest,
-              joinFun, allParents,
+              GOSumTest, GOKSTiesTest, 
+              joinFun, allParents, depth, "depth<-",
               expressionMatrix, phenotype)
 
 export(annFUN.db, annFUN, annFUN.gene2GO, annFUN.GO2genes, annFUN.org, annFUN.file,
-       readMappings, inverseList, whichAlgorithms, whichTests, 
+       combineResults, readMappings, inverseList, whichAlgorithms, whichTests, 
        GOplot, showSigOfNodes, getPvalues, showGroupDensity,
        reverseArch, nodesInInducedGraph, inducedGraph, buildLevels,
        getNoOfLevels, getGraphRoot,
+       permSumStats, permSumStats.all,
        groupGOTerms, .genesInNode, .countsInNode)

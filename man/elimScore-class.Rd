@@ -1,6 +1,7 @@
 \name{elimScore-class}
 \docType{class}
 
+\alias{leaScore-class}
 \alias{elimScore-class}
 \alias{weight01Score-class}
 
@@ -15,9 +16,10 @@
 \alias{elim,elimScore-method}
 \alias{elim<-,elimScore-method}
 
+\alias{depth,leaScore-method}
+\alias{depth<-,leaScore-method}
 
 \alias{alternative,elimScore-method}
-\alias{GOKSTest,elimScore-method}
 \alias{membersScore,elimScore-method}
 \alias{members,elimScore-method}
 \alias{numMembers,elimScore-method}
@@ -25,14 +27,16 @@
 \alias{rankMembers,elimScore-method}
 \alias{score<-,elimScore-method}
 
+
+\alias{initialize,leaScore-method}
 \alias{initialize,elimScore-method}
+\alias{initialize,weight01Score-method}
 
 \alias{allMembers,weight01Score-method}
 \alias{allScore,weight01Score,missing-method}
 \alias{allScore,weight01Score,logical-method}
 \alias{elim<-,weight01Score-method}
 \alias{elim,weight01Score-method}
-\alias{initialize,weight01Score-method}
 \alias{members,weight01Score-method}
 \alias{membersScore,weight01Score-method}
 \alias{numAllMembers,weight01Score-method}

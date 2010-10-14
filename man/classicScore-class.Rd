@@ -20,6 +20,8 @@
 
 \alias{GOKSTest,classicScore-method}
 \alias{GOtTest,classicScore-method}
+\alias{GOSumTest,classicScore-method}
+\alias{GOKSTiesTest,classicScore-method}
 
 
 

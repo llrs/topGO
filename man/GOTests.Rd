@@ -4,7 +4,10 @@
 \alias{GOKSTest}
 \alias{GOtTest}
 \alias{GOglobalTest}
-
+\alias{GOSumTest}
+\alias{GOKSTiesTest}
+\alias{permSumStats}
+\alias{permSumStats.all}
 
 \title{Gene set tests statistics}
 
@@ -18,6 +21,8 @@ GOFisherTest(object)
 GOKSTest(object)
 GOtTest(object)
 GOglobalTest(object)
+GOSumTest(object)
+GOKSTiesTest(object)
 }
 
 \arguments{

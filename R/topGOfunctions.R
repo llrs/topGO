@@ -402,3 +402,41 @@ getPvalues <- function(edata, classlabel, test = "t",
 
 ################################################################################
 ################################################################################
+
+## function to aggregate 2 or more topGOdata objects
+combineResults <- function(..., method = c("gmean", "mean", "median", "min", "max")) {
+
+  resList <- list(...)
+  ## first for the class of the elements in the list
+  if((length(resList) < 2) || !all(sapply(resList, is, "topGOresult")))
+    stop("Use: topGOresult_1, topGOresult_2, ..., method = \"mean\"")
+  
+  combMethod <- match.arg(method)
+
+  retVal <- resList[[1]] 
+
+  ## update the infos
+  description(retVal) <- paste(description(retVal),
+                               paste(combMethod, "(",
+                                     paste(sapply(resList, algorithm), collapse = ", "),
+                                     ")", sep = ""),
+                               sep = "\n")
+  testName(retVal) <- paste(unique(sapply(resList, testName)), collapse = ", ")
+  algorithm(retVal) <- "ensemble"
+    
+  ## get the list of GOs
+  nn <- names(score(retVal))
+  ## obtain the score from the objects
+  resList <- do.call(cbind, lapply(resList, score, whichGO = nn))
+
+  newRes <- switch(combMethod, 
+                   mean = rowMeans(resList),
+                   median = rowMedians(resList),
+                   min = rowMin(resList),
+                   max = rowMax(resList),
+                   gmean = exp(rowMeans(log(resList))))
+  names(newRes) <- rownames(resList) # just to make sure ... some of the functions we use might drop the names
+  score(retVal) <- newRes
+
+  return(retVal)
+}

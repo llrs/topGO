@@ -843,7 +843,7 @@ setMethod("initialize", "classicScore",
                                  increasing = FALSE,
                                  stop("scoreOrder should be increasing or decreasing"))
             
-            ## first we order the members aording to the score
+            ## first we order the members according to the score
             index <- order(score, decreasing = scoreOrder)
             if(length(allMembers) != length(score))
               warning("score length don't match.")
@@ -1671,3 +1671,102 @@ setMethod("updateGroup",
             
             return(object)
           })
+
+
+
+
+######################################################################
+######################################################################
+
+#################### leaCount methods ####################
+
+#################### constructor ####################
+setMethod("initialize", "leaCount",
+          function(.Object,
+                   testStatistic,
+                   name = character(),
+                   allMembers = character(),
+                   groupMembers = character(),
+                   sigMembers = character(),
+                   elim = integer(),
+                   depth = 2,
+                   ...) {
+            .Object <- callNextMethod(.Object, testStatistic, name,
+                                      allMembers, groupMembers,
+                                      sigMembers, elim = elim)
+            .Object@depth <- as.integer(depth)
+            .Object@testStatPar = list(...)
+
+            .Object
+          })
+
+if(!isGeneric("depth<-"))
+  setGeneric("depth<-", function(object, value) standardGeneric("depth<-"))
+                               
+setMethod("depth<-", "leaCount",
+          function(object, value)  {object@depth <- as.integer(value); object})
+
+
+if(!isGeneric("depth")) 
+  setGeneric("depth", function(object) standardGeneric("depth"))
+                               
+setMethod("depth", "leaCount", function(object) object@depth)
+
+
+
+#################### elimScore methods ####################
+
+#################### constructor ####################
+setMethod("initialize", "leaScore",
+          function(.Object,
+                   testStatistic,
+                   name = character(),
+                   allMembers = character(),
+                   groupMembers = character(),
+                   score = numeric(),
+                   scoreOrder = "increasing",
+                   elim = integer(),
+                   depth = 2,
+                   ...) {
+            .Object <- callNextMethod(.Object, testStatistic, name,
+                                      allMembers, groupMembers, score,
+                                      scoreOrder, elim = elim)
+            .Object@depth <- as.integer(depth)
+            .Object@testStatPar = list(...)
+
+            .Object
+          })
+
+setMethod("depth<-", "leaScore",
+          function(object, value)  {object@depth <- as.integer(value); object})
+
+setMethod("depth", "leaScore", function(object) object@depth)
+
+
+
+#################### elimExpr methods ####################
+
+#################### constructor ####################
+setMethod("initialize", "leaExpr",
+          function(.Object,
+                   testStatistic,
+                   name = character(),
+                   groupMembers = character(),
+                   exprDat,
+                   pType = factor(),
+                   elim = integer(),
+                   depth = 2,
+                   ...) {
+            .Object <- callNextMethod(.Object, testStatistic, name,
+                                      groupMembers, exprDat, pType,
+                                      elim = elim)
+            .Object@depth <- as.integer(depth)
+            .Object@testStatPar = list(...)
+
+            .Object
+          })
+
+setMethod("depth<-", "leaExpr",
+          function(object, value)  {object@depth <- as.integer(value); object})
+
+setMethod("depth", "leaExpr", function(object) object@depth)

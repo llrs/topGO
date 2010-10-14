@@ -9,6 +9,7 @@
 \usepackage{calc}
 \usepackage{sectsty}
 \usepackage{caption}
+\usepackage{natbib}
 \renewcommand{\captionfont}{\it\sffamily}
 \renewcommand{\captionlabelfont}{\bf\sffamily}
 \allsectionsfont{\sffamily}
@@ -38,18 +39,20 @@
 
 <<echo = FALSE>>=
 options(width = 95)
+## we better keep the data in data frames as strings
+options(stringsAsFactors = FALSE)
 @ 
 
 \section{Introduction}
 
-The {\tt topGO} package is designed to facilitate semi-automated enrichment analysis for Gene Ontology terms. 
+The {\tt topGO} package is designed to facilitate semi-automated enrichment analysis for Gene Ontology (GO) terms. 
 The process consists of input of normalised gene expression measurements, gene-wise correlation or differential 
 expression analysis, enrichment analysis of GO terms, interpretation and visualisation of the results.
 
-One of the main advantages of {\tt topGO}, is the unified gene set testing framework it offers, which 
-besides providing an easy to use set of functions for performing an enrichment analysis, it
+One of the main advantages of {\tt topGO} is the unified gene set testing framework it offers.
+Besides providing an easy to use set of functions for performing GO enrichment analysis, it
 also enables the user to easily implement new statistical tests or new algorithms that deal with
-the GO graph structure. Such an unified framework also facilitates the comparison between different
+the GO graph structure. This unified framework also facilitates the comparison between different
 GO enrichment methodologies. 
 
 % The package provides a set of classes and methods for performing enrichment analysis
@@ -61,69 +64,101 @@ ready to use in {\tt topGO}. Table~\ref{tabletopGO} presents the compatibility t
 the test statistics and GO graph methods.
 
 
+<<echo = FALSE>>=
+x <- topGO:::.algoComp[, -8]
+x <- x[, colSums(x) > 0]
+yesPic <- "\\includegraphics[width=3mm]{green_ckmark.png}"
+noPic <- "\\includegraphics[width=3mm]{red_ckmark.png}"
+x[x == 1] <-  yesPic
+x[x == "0"] <-  noPic
+@ 
+
 \begin{table}[!ht]
-  \centering\resizebox{.6\linewidth}{!}{%
-    \begin{tabular}{lccccc}
-      \hline
-      & Fisher & KS  & t & globaltest & Category \\
-      \hline
-      {\sf classic} & yes & yes & yes & yes & yes \\
-      {\sf elim} & yes & yes & yes & yes & yes \\
-      {\sf weight} & yes & no & no & no & no \\
-      {\sf topgo} & yes & yes & yes & yes & no \\
-      {\sf parentChild} & yes & no & no & no & no \\
-      \hline
-    \end{tabular}}\caption{\small The algorithms supported by {\bf topGO}.}
-  \label{tabletopGO}
+  \centering\resizebox{.5\linewidth}{!}{%
+<<echo = FALSE, results = tex>>=
+if(require(xtable))
+  print(xtable(x, align =  c("l", rep("c", ncol(x)))), 
+        type = "latex", sanitize.text.function = function(x) return(x),
+        floating = FALSE)
+
+@
+}\caption{Algorithms currently supported by {\bf topGO}.}
+\label{tabletopGO}
 \end{table}
 
-
-The {\sf elim, weight} algorithms were introduced in~\cite{Alexa2006}. The default algorithm
+The {\sf elim} and {\sf weight} algorithms were introduced in~\cite{Alexa2006}. The default algorithm
 used by the {\tt topGO} package is a mixture between the {\sf elim} and the {\sf weight} algorithms and
-it will be referred as {\sf topgo} (lower-case letters). The {\sf parentChild} algorithm was 
-introduced by~\cite{Grossmann2007}.
+it will be referred as {\sf weight01}. The {\sf parentChild} algorithm was introduced by~\cite{Grossmann2007}.
 
-The next section provides a quick tour into {\tt topGO} and is thought to be independent of the rest
-of this manuscript. The remaining sections will provide details on the functions used in the sample
+We assume the user has a good understanding of GO, see~\cite{GOC01}, and is familiar with gene set enrichment 
+tests. Also this document requires basic knowledge of R language.
+
+The next section presents a quick tour into {\tt topGO} and is thought to be independent of the rest
+of this manuscript. The remaining sections provide details on the functions used in the sample
 section as well as showing more advance functionality implemented in the {\tt topGO} package.
 
+\section{Instalation}
 
-\section{Sample session}
+This section briefly describe the necessary to get {\tt topGO} running on your system. 
+We assume that the user have the R program (see the R project at http://www.r-project.org) already
+installed and its familiar with it. You will need to have R 2.10.0 or later to be able to install and
+run {\tt topGO}.
+
+The {\tt topGO} package is available from the Bioconductor repository at http://www.bioconductor.org
+To be able to install the package one needs first to install the core Bioconductor packages. 
+If you have already installed Bioconductor packages on your system then you can skip the two lines 
+below.
+
+<<eval = FALSE>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite()
+@ 
+
+Once the core Bioconductor packages are installed, we can install the {\tt topGO} package by
+
+<<eval = FALSE>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite("topGO")
+@ 
+
+\clearpage
+
+\section{Quick start guide}
 \label{sampleSession}
 
-This section describes a simple working-session using {\tt topGO}. There are only a handful of commands
-necessary to perform a gene set enrichment analysis and we will be briefly presented them bellow.
+This section describes a simple working session using {\tt topGO}. There are only a handful of commands
+necessary to perform a gene set enrichment analysis which will be briefly presented below.
 
 A typical session can be divided into three steps:
 \begin{enumerate}
-\item {\it Preparing the data:} The list of genes identifiers, the gene' score,
-  the list of differentially expressed genes or a criteria for selecting genes based on their scores
-  and the gene-to-GO annotations are all collected to form a suitable {\tt R} object.
+\item {\it Data preparation:} List of genes identifiers, gene scores, list of differentially expressed genes
+  or a criteria for selecting genes based on their scores, as well as gene-to-GO annotations are all collected
+  and stored in a single {\tt R} object.
   
-\item {\it Running the desired tests:} Using the object created in the first step the user can perform
-  enrichment analysis using various statistical tests and various methods that deal with the GO topology.
+\item {\it Running the enrichment tests:} Using the object created in the first step the user can perform
+  enrichment analysis using any feasible mixture of statistical tests and methods that deal with the GO topology.
   
 \item {\it Analysis of the results:} The results obtained in the second step are analysed using 
   summary functions and visualisation tools.
 \end{enumerate}
 
 Before going through each of those steps the user needs to decide which biological question he would
-like to investigate. This most likely, together with the data available at hand, will dictate which test 
-statistic/methods he needs to use. 
+like to investigate. The aim of the study, as well as the nature of the available data, will dictate which test 
+statistic/methods need to used. 
 
 In this section we will test the enrichment of GO terms with differentially expressed genes using two 
 statistical tests, namely Kolmogorov-Smirnov test and Fisher's exact test.
 
 
-\subsection{Step 1: Preparing the data}
+\subsection{Data preparation}
 In the first step a convenient {\tt R} object of class {\tt topGOdata} is created containing all the
-information required for the remaining two steps. The user needs to provide a list of genes, GO annotations
-and a criteria for selecting interesting genes.
+information required for the remaining two steps. The user needs to provide the gene universe, GO annotations
+and either a criteria for selecting interesting genes (e.g. differentially expressed genes) from the gene
+universe or a score associated with each gene.
 
-In most cases we want to test enrichment of GO terms with differentially expressed genes. Thus, the 
+In this session we will test the enrichment of GO terms with differentially expressed genes. Thus, the 
 starting point is a list of genes and the respective $p$-values for differential expression. A toy
-example of a list of gene identifiers and the respective $p$-values is provided by the {\tt geneList}
-object.
+example of a list of gene $p$-values is provided by the {\tt geneList} object.
 
 <<results = hide>>=
 library(topGO)
@@ -132,29 +167,32 @@ data(ALL)
 data(geneList)
 @ 
 
-The {\tt geneList} data is based on a differential expression analysis of the ALL dataset.
-It contains just a small number, $\Sexpr{length(geneList)}$, of genes with the corespondent $p$-values.
-For these genes we need GO annotations to be able to form the gene groups. The information on where to
-find the GO annotations is stored in the ALL object and its easily accessible.
+The {\tt geneList} data is based on a differential expression analysis of the ALL(Acute Lymphoblastic Leukemia)
+dataset that was extensively studied in the literature on microarray analysis~\cite{Chiaretti04}.
+Our toy example contains just a small amount, $\Sexpr{length(geneList)}$, of genes and their corresponding $p$-values.
+The next data one needs are the gene groups itself, the GO terms in our case, and the mapping that associate 
+each gene with one or more GO term(s). The information on where to find the GO annotations is stored in the {\tt ALL}
+object and it is easily accessible.
 
 <<>>=
 affyLib <- paste(annotation(ALL), "db", sep = ".")
 library(package = affyLib, character.only = TRUE)
 @ 
 
-The chip used in the experiment is the {\tt \Sexpr{annotation(ALL)}} from Affymetrix, as we can see 
-from the {\tt affyLib} object. When we loaded the {\tt geneList} object a function which will select 
-the differentially expressed genes from the list was also loaded under the name of {\tt topDiffGenes}.
-For example using this function we can see that there are \Sexpr{sum(topDiffGenes(geneList))} genes
-with a row $p$-value less than $0.01$ out of a total of \Sexpr{length(geneList)} genes.
+The microarray used in the experiment is the {\tt \Sexpr{annotation(ALL)}} from Affymetrix, as we can see 
+from the {\tt affyLib} object. When we loaded the {\tt geneList} object a selection function used for 
+defining the list of differentially expressed genes is also loaded under the name of {\tt topDiffGenes}.
+The function assumes that the provided argument is a named vector of $p$-values. With the help of this
+function we can see that there are \Sexpr{sum(topDiffGenes(geneList))} genes with a raw $p$-value less
+than $0.01$ out of a total of \Sexpr{length(geneList)} genes.
 
 <<>>=
 sum(topDiffGenes(geneList))
 @ 
 
-We now have all the data necessary to build on object of type {\tt topGOdata}. This object will
-contain all the gene identifiers and their score, the GO annotations, the GO hierarchical structure
-and all the other information needed to perform the enrichment analysis. 
+We now have all data necessary to build an object of type {\tt topGOdata}. This object will
+contain all gene identifiers and their scores, the GO annotations, the GO hierarchical structure
+and all other information needed to perform the desired enrichment analysis. 
 
 <<results = hide>>=
 sampleGOdata <- new("topGOdata", 
@@ -164,61 +202,70 @@ sampleGOdata <- new("topGOdata",
                     annot = annFUN.db, affyLib = affyLib)
 @ 
 
+The names of the arguments used for building the {\tt topGOdata} object should be self-explanatory. 
+We quickly mention that {\tt nodeSize = 10} is used to prune the GO hierarchy from the terms
+which have less than $10$ annotated genes and that {\tt annFUN.db} function is used to extract the 
+gene-to-GO mappings from the {\tt affyLib} object. Section~\ref{subsec:topGOdata} describes the
+parameters used to build the {\tt topGOdata} in details.
+
 A summary of the {\tt sampleGOdata} object can be seen by typing the object name at the R prompt.
 Having all the data stored into this object facilitates the access to identifiers, annotations and 
-to obtain basic data statics.
+to basic data statistics.
 
 <<results = hide>>=
 sampleGOdata
 @ 
 
 
-\subsection{Step 2: Running the desired tests}
+\subsection{Performing the enrichment tests}
 Once we have an object of class {\tt topGOdata} we can start with the enrichment analysis. 
-Since for each gene we have a score and there is also a procedure to select interesting 
-genes based on the scores we will use two types of test statistics: Fisher's exact test which 
-is based on gene counts, and a Kolmogorov-Smirnov like test which needs gene scores.
+We will use  two types of test statistics: Fisher's exact test which is based on gene counts,
+and a Kolmogorov-Smirnov like test which computes enrichment based on gene scores. We can use 
+both these tests since each gene has a score (representing how differentially expressed a gene is)
+and by the means of {\tt topDiffGenes} functions the genes are categorized into differentially 
+expressed or not differentially expressed genes. All these are stored into {\tt sampleGOdata} object.
 
-The function {\tt runTest} is used to apply the specified enrichment test and method to the data.
+The function {\tt runTest} is used to apply the specified test statistic and method to the data.
 It has three main arguments. The first argument needs to be an object of class {\tt topGOdata}.
-The second and the third arguments are of type character and specifies which method for dealing with
-the GO graph structure will be used and the test statistic, respectively.
+The second and third argument are of type character; they specify the method for dealing with
+the GO graph structure and the test statistic, respectively.
 
-First we perform a classical enrichment analysis by testing the over-representation of GO terms with
-differentially expressed genes. In the classical case each GO category is tested independently. 
+First, we perform a classical enrichment analysis by testing the over-representation of GO terms 
+within the group of differentially expressed genes. For the method {\sf classic} each GO category 
+is tested independently. 
 
 <<results = hide>>=
 resultFisher <- runTest(sampleGOdata, algorithm = "classic", statistic = "fisher")
 @ 
 
-{\tt runTest} returns an object of class {\tt topGOresult}. A short summary of this object is shown bellow.
+{\tt runTest} returns an object of class {\tt topGOresult}. A short summary of this object is shown below.
 
 <<>>=
 resultFisher
 @ 
 
-Next we will test the enrichment using the Kolmogorov-Smirnov test. We will use the both the {\sf classic}
-and the {\sf elim} methods.
+Next we will test the enrichment using the Kolmogorov-Smirnov test. We will use the both the
+{\sf classic} and the {\sf elim} method.
 
 <<results = hide>>=
 resultKS <- runTest(sampleGOdata, algorithm = "classic", statistic = "ks")
 resultKS.elim <- runTest(sampleGOdata, algorithm = "elim", statistic = "ks")
 @ 
 
-Please note that some statistical tests will not work with any method. The compatibility matrix between
+Please note that not all statistical tests work with every method. The compatibility matrix between
 the methods and statistical tests is shown in Table~\ref{tabletopGO}.
 
-The $p$-values computed by the {\tt runTest} function are unadjusted for multiple testing. We do note
-advocate against adjusting the $p$-values of the tested groups, but in many cases the an adjusted $p$-value
-can be misleading. 
+The $p$-values computed by the {\tt runTest} function are unadjusted for multiple testing. We do not
+advocate against adjusting the $p$-values of the tested groups, however in many cases adjusted $p$-values
+might be misleading.
 
 
-\subsection{Step 3: Analysis of results}
+\subsection{Analysis of results}
 After the enrichment tests are performed the researcher needs tools for analysing and interpreting the
 results. {\tt GenTable} is an easy to use function for analysing the most significant GO terms and the
-corresponding $p$-values. For example, we want to see which are the top $10$ significant GO terms identified 
-by the {\sf elim} method. We also want to compare the ranks and the $p$-values of these GO terms in the
-case where the {\sf classic} method was employe used.
+corresponding $p$-values. In the following example, we list the top $10$ significant GO terms identified 
+by the {\sf elim} method. At the same time we also compare the ranks and the $p$-values of these GO terms
+with the ones obtained by the {\sf classic} method.
 
 <<>>=
 allRes <- GenTable(sampleGOdata, classicFisher = resultFisher, 
@@ -226,10 +273,10 @@ allRes <- GenTable(sampleGOdata, classicFisher = resultFisher,
                    orderBy = "elimKS", ranksOf = "classicFisher", topNodes = 10)
 @ 
 
-The {\tt GenTable} function returns a data.frame containing the top {\tt topNodes} GO terms identified
-by the {\sf elim} algorithm, see {\tt orderBy} argument. The data.frame includes some statistics on the
-GO terms and the $p$-values obtained from the methods passes as arguments. Table~\ref{tab:sampleGOresults}
-shows the results.
+The {\tt GenTable} function returns a data frame containing the top {\tt topNodes} GO terms identified
+by the {\sf elim} algorithm, see {\tt orderBy} argument. The data frame includes some statistics on the
+GO terms and the $p$-values corresponding to each of the {\tt topGOresult} object specified as arguments.
+Table~\ref{tab:sampleGOresults} shows the results.
 
 \begin{table}[!t]
   \centering\resizebox{.99\linewidth}{!}{%
@@ -244,34 +291,85 @@ if(require(xtable))
 
 For accessing the GO term's $p$-values from a {\tt topGOresult} object the user should use the {\tt score}
 functions. As a simple example, we look at the differences between the results of the {\sf classic} and
-the {\sf elim} methods in the case of the Kolmogorov-Smirnov test. Due to the fact that there are few 
-significant GO terms, $\Sexpr{sum(score(resultKS) <= 0.01)}$ terms with a $p$-value less than $0.01$
-in the {\sf classic} method, one would expect that only few GO terms will have different $p$-values
-between these two methods. This, of course, depends on the value of the cutoff parameter used by the 
-{\sf elim} method.
+the {\sf elim} methods in the case of the Kolmogorov-Smirnov test. The {\tt elim} method was design to be 
+more conservative then the {\tt classic} method and therefore one expects the $p$-values returned by the
+former method are lower bounded by the $p$-values returned by the later method. 
+The easiest way to visualize this property is to scatter plot the two sets of $p$-values against each other. 
 
 
-\setkeys{Gin}{width=.4\linewidth}
-\begin{figure}[!h]
-  \centering 
-<<fig = TRUE>>=
+<<echo = FALSE>>=
+colMap <- function(x) {
+  .col <- rep(rev(heat.colors(length(unique(x)))), time = table(x))
+  return(.col[match(1:length(x), order(x))])
+}
+@ 
+
+<<eval = FALSE>>=
 pValue.classic <- score(resultKS)
 pValue.elim <- score(resultKS.elim)[names(pValue.classic)]
-plot(pValue.classic, pValue.elim, xlab = "p-value classic", ylab = "p-value elim", cex = .5)
+
+gstat <- termStat(sampleGOdata, names(pValue.classic))
+gSize <- gstat$Annotated / max(gstat$Annotated) * 4
+gCol <- colMap(gstat$Significant)
+
+plot(pValue.classic, pValue.elim, xlab = "p-value classic", ylab = "p-value elim",
+     pch = 19, cex = gSize, col = gCol)
 @ 
-\caption{$p$-values scatter plot for the {\sf classic} and {\sf elim} methods.}
+
+
+\setkeys{Gin}{width=.9\linewidth}
+\begin{figure}[!h]
+  \centering 
+<<fig = TRUE, echo = FALSE, width = 11>>=
+pValue.classic <- score(resultKS)
+pValue.elim <- score(resultKS.elim)[names(pValue.classic)]
+
+gstat <- termStat(sampleGOdata, names(pValue.classic))
+gSize <- gstat$Annotated / max(gstat$Annotated) * 4
+gCol <- colMap(gstat$Significant)
+
+par(mfcol = c(1, 2), cex = 1)
+plot(pValue.classic, pValue.elim, xlab = "p-value classic", ylab = "p-value elim",
+     pch = 19, cex = gSize, col = gCol)
+
+plot(pValue.classic, pValue.elim, log = "xy", xlab = "log(p-value) classic", ylab = "log(p-value) elim",
+     pch = 19, cex = gSize, col = gCol)
+
+@ 
+\caption{$p$-values scatter plot for the {\sf classic} ($x$ axis) and {\sf elim} ($y$ axis)
+  methods. On the right panel the $p$-values are plotted on a linear scale. The left panned plots the same
+  $p$-values on a logarithmic scale. The size of the dot is proportional with the number of annotated genes
+  for the respective GO term and its coloring represents the number of significantly differentially 
+  expressed genes, with the dark red points having more genes then the yellow ones.}
 \label{scatterClassicElim}
 \end{figure}
 
-We can see in Figure~\ref{scatterClassicElim} that there are indeed few differences between
-the two methods. Some GO terms witch are found significant by the {\sf classic} method are less 
-significant in the {\sf elim}, as expected.
+We can see in Figure~\ref{scatterClassicElim} that there are indeed differences between
+the two methods. Some GO terms found significant by the {\sf classic} method are less 
+significant in the {\sf elim}, as expected. However, we can visible identify a few 
+GO terms for which the {\sf elim} $p$-value is less conservative then the {\sf classic} $p$-value.
+We can identify these terms and find the number of annotated genes:
+
+
+<<>>=
+sel.go <- names(pValue.classic)[pValue.elim < pValue.classic]
+cbind(termStat(sampleGOdata, sel.go),
+      elim = pValue.elim[sel.go],
+      classic = pValue.classic[sel.go])
+@ 
+
+It is quite interesting that such cases appear. These $\Sexpr{length(sel.go)}$ GO terms are rather
+general (having many annotated genes) and their $p$-values are not significant at the $0.05$ level. 
+Also the difference in the significance is rather small, bar one term. Therefore these GO terms 
+would not appear in the list of top significant terms. More significant GO terms are less likely 
+to be influenced by this non monotonic behavior.
+
 
 Another insightful way of looking at the results of the analysis is to investigate how
-the significant GO terms are distributed over the GO graph. For the {\tt elim} algorithm
-the subgraph induced by the $5$ most significant GO terms is plotted. In the plot, the
-significant nodes are represented as boxes. The plotted graph is the upper induced graph
-generated by these significant nodes. 
+the significant GO terms are distributed over the GO graph.
+Figure~\ref{fig:sampleGOelim} shows the the subgraph induced by the $5$ most significant GO terms
+as identified by the {\tt elim} algorithm. Significant nodes are represented as rectangles. 
+The plotted graph is the upper induced graph generated by these significant nodes. 
 
 <<eval = FALSE>>=
 showSigOfNodes(sampleGOdata, score(resultKS.elim), firstSigNodes = 5, useInfo = 'all')
@@ -287,8 +385,7 @@ printGraph(sampleGOdata, resultKS.elim, firstSigNodes = 5, fn.prefix = "tGO", us
 \caption{The subgraph induced by the top $5$ GO terms identified by the {\sf elim} algorithm
   for scoring GO terms for enrichment. Rectangles indicate the $5$ most significant terms.
   Rectangle color represents the relative significance, ranging from dark red (most significant)
-  to light yellow (least significant). Black arrows indicate {\it is-a} relationships and red
-  arrows {\it part-of} relationships.
+  to bright yellow (least significant). 
   For each node, some basic information is displayed. The first two lines show the  GO identifier
   and a trimmed GO name. In the third line the raw p-value is shown. The forth line is showing the 
   number of significant genes and the total number of genes annotated to the respective GO term. 
@@ -299,37 +396,42 @@ printGraph(sampleGOdata, resultKS.elim, firstSigNodes = 5, fn.prefix = "tGO", us
 
 
 
+\section{Loading genes and annotations data}
+\label{sec:topGOdata}
 
-\section{Setup}
-\label{sec:preprocessing}
-To demonstrate the package functionality we will use the ALL gene expression data from \cite{Chiaretti04}.
-The dataset consists of $128$ microarrays from different patients with ALL. Additionally, custom 
-annotations and artificial datasets will be used to demonstrate specific futures. 
 
-We first load the libraries and the data:
+\subsection{Getting started}
+\label{subsec:preprocessing}
+To demonstrate the package functionality we will use the ALL(Acute Lymphoblastic Leukemia) gene expression
+data from \cite{Chiaretti04}. The dataset consists of $128$ microarrays from different patients with ALL
+measured using the HGU95aV2 Affymetrix chip.
+Additionally, custom annotations and artificial datasets will be used to demonstrate specific features. 
+
+We first load the required libraries and data:
 <<results = hide>>=
 library(topGO)
 library(ALL)
 data(ALL)
 @ 
 
-When the {\tt topGO} package is loaded three environments {\tt GOBPTerm, GOMFTerm} and {\tt GOMFTerm}
-are created and binded to the package environment. These environments are build based on the {\tt GOTERM} 
+When the {\tt topGO} package is loaded three environments {\tt GOBPTerm, GOMFTerm} and {\tt GOCCTerm}
+are created and bound to the package environment. These environments are build based on the {\tt GOTERM} 
 environment from package {\tt GO.db}. They are used for fast recovering of the information specific to each
-ontology. In order to access all GO groups that belong to a specific ontology, e.g. Biological Process (BP),
-one can type:
+of the three ontologies: BP, MF and CC. In order to access all GO groups that belong to a specific ontology,
+e.g. Biological Process (BP), one can type:
 <<>>= 
 BPterms <- ls(GOBPTerm)
 head(BPterms)
 @ 
 
 
-Usually one needs to remove probes with low expression value and genes which might have very small
-variability across the samples. Package {\tt genefilter} provides tools for filtering genes. In this 
-analysis we choose to filter as many genes as possible for computational reasons.
-{\it Having a smaller gene universe allows as to exemplify here the functionality of the {\tt topGO}
-  package in a relatively short time.}
-The effect of the gene filtering will be discuss in more details in Section~\ref{subsec:GOannotations}.
+Usually one needs to remove probes/genes with low expression value as well as probes with very small
+variability across samples. Package {\tt genefilter} provides tools for filtering genes. In this 
+analysis we choose to filter as many genes as possible for computational reasons;
+working with a smaller gene universe allows us to exemplify more of the functionalities implemented
+in the {\tt topGO} package and at the same time allows this document to be compiled in a
+relatively short time.
+The effect of gene filtering is discussed in more details in Section~\ref{subsec:GOannotations}.
 
 %%selProbes <- genefilter(ALL, filterfun(pOverA(0.25, log2(100)), function(x) (IQR(x) > 0.5)))
 <<>>=
@@ -340,126 +442,58 @@ eset <- ALL[selProbes, ]
 The filter selects only $\Sexpr{nrow(eset)}$ probesets out of $\Sexpr{nrow(ALL)}$ probesets available 
 on the $\Sexpr{annotation(ALL)}$ array.
 
+\paragraph{The gene universe and the set of  interesting genes} \ \\
+The set of all genes from the array/study will be referred from now on as the gene universe.
+Having the gene universe, the user can define a list of interesting genes or to compute
+gene-wise scores that quantify the significance of each gene. When gene-wise scores are available 
+the list of interesting genes is defined to be the set of gene with a {\it significant} score. 
+The {\tt topGO} package deals with these two cases in a unified way once the main data container, 
+the {\tt topGOdata} object, is constructed. The only time the user needs to distinguish between 
+these two cases is during the construction of the data container. 
+
+Usually, the gene universe is defined as all feasible genes measured by the microarray. In the case of
+the ALL dataset we have $\Sexpr{length(featureNames(eset))}$ feasible genes, the ones that were not
+removed by the filtering procedure. 
 
 
-\section{Creating a {\tt topGOdata} object}
-\label{sec:topGOdata}
+\subsection{The {\tt topGOdata} object}
+\label{subsec:topGOdata}
 The central step in using the {\tt topGO} package is to create a {\tt topGOdata} object.
 This object will contain all information necessary for the GO analysis, namely the list of genes,
-the list of interesting genes, the gene' score, if available and the part of the GO ontology
+the list of interesting genes, the gene scores (if available) and the part of the GO ontology
 (the GO graph) which needs to be used in the analysis. 
 The {\sf topGOdata} object will be the input of the testing procedures, the evaluation and visualisation 
 functions.
 
-To build such an object the user needs the followings:
+To build such an object the user needs the following:
 \begin{itemize}
-\item A list of gene identifiers and optionally their score. The gene-wise score can be the $t$-test
-  statistic (or the $p$-value) for differential expression, correlation with a phenotype, or any other
-  relevant score.
+\item A list of gene identifiers and optionally the gene-wise scores. The score can be the
+  $t$-test statistic (or the $p$-value) for differential expression, correlation with a phenotype, 
+  or any other relevant score.
 
 \item A mapping between gene identifiers and GO terms. In most cases this mapping is directly available
-  in Bioconductor as a chip specific annotation package. In this case the user just needs to specify the
-  name of the annotation to be used. For example, the annotation package needed for the ALL dataset is
-  {\tt \Sexpr{affyLib}}.
+  in Bioconductor as a microarray specific annotation package. In this case the user just needs to
+  specify the name of the annotation to be used. For example, the annotation package needed for the ALL
+  dataset is {\tt \Sexpr{affyLib}}.
   
-  However it can happen that there is no annotation package available in Bioconductor (custom chips or 
-  new mappings between genes and GO terms). Section~\ref{subsec:annotations} will describe how custom
-  annotations can be used.
+  Of course, Bioconductor does not include up-to-date annotation packages for all platforms. 
+  Users who work with custom arrays or wish to use a specific mapping between genes and GO terms, 
+  have the possibility to load custom annotations. This is described in Section~\ref{subsec:annotations}.
 
-\item The GO hierarchical structure. The structure is obtained from the {\tt GO.db} package. At the moment
-  user cannot use a different version of the ontology than the one provided by {\tt GO.db}.
+\item The GO hierarchical structure. This structure is obtained from the {\tt GO.db} package. At the moment
+  {\tt topGO} supports only the ontology definition provided by {\tt GO.db}.
 
 \end{itemize}
 
-
-\paragraph{The gene universe and the interesting genes} \ \\
-The set of all genes from the array/study will be referred from now on as the gene universe.
-From the gene universe, the user needs to define the list of interesting genes or to compute
-gene-wise scores that quantify the significance of each gene. The {\tt topGO} package deals with these
-two cases in a unified way once the {\tt topGOdata} object is constructed. The only difference stands
-in the way the object is build. 
-
-Usually one starts with all feasible genes present on the array as the gene universe. In the case of
-the ALL dataset we start with $\Sexpr{length(featureNames(eset))}$ genes, genes that were not removed
-by the filtering procedure. 
-
-
-\subsection{Custom annotations}
-\label{subsec:annotations}
-This section describes how custom GO annotations can be used in building a {\tt topGOdata} object.
-
-Annotations need to be provided either as {\it gene-to-GOs} or as {\it GO-to-genes} mappings.
-An example of such mapping can be found in the "topGO/examples" directory. The file contains
-gene-to-GOs mappings, meaning that for each gene identifier the GO terms to which this genes is
-specifically annotated are listed. To read this file we use the {\tt readMappings} function. 
-
-<<>>=
-ensembl2GO <- readMappings(file = system.file("examples/ensembl2go.map", package = "topGO"))
-str(head(ensembl2GO))
-@ 
-
-The object returned by the {\tt readMappings} function is a named list of character vectors. The list
-names are genes identifiers and for each gene identifier the character vector contains the GO identifiers
-it maps to. It is sufficient for the mapping to contain only the most specific GO annotations. However,
-there is no problem if all or some ancestors of the most specific GO terms are included. This redundancy
-is not making for a faster running time and if possible it should be avoided.
-
-The user can read the annotations from text files or they can build an object such as {\tt ensembl2GO}
-directly into R. The text file format required by the {\tt readMappings} function is very simple. It
-consists of one line for each gene with the following line structure:
-
-\begin{verbatim}
-gene_ID<TAB>GO_ID1, GO_ID2, GO_ID3, ....
-\end{verbatim}
-
-Reading GO-to-genes mappings from a file is done in the same way using the {\tt readMappings} function.
-However, it is the user responsibility to know the direction of the mappings. The user can easily
-transform a mapping from gene-to-GOs to GO-to-genes (or vice-versa) using the {\tt inverseList} function:
-
-<<>>=
-GO2ensembl <- inverseList(ensembl2GO)
-str(head(GO2ensembl))
-@ 
-
-
-\subsection{Predefined list of interesting genes}  
-\label{subsec:sigGenes}
-If the user has some a priori knowledge about a set of interesting genes, he can test the enrichment of
-GO terms with regard to this list of interesting genes. In this scenario, when only a list of interesting
-genes is provided, the user can use only tests statistics that are based on gene counts, like Fisher's exact
-test, Z score and alike.
-
-To demonstrate how custom annotation can be used this section is based on the toy dataset, the {\tt ensembl2GO}
-data, from Section~\ref{subsec:annotations}. The gene universe in this case is given by the list names:
-
-<<results = hide>>=
-geneNames <- names(ensembl2GO)
-head(geneNames)
-@ 
-
-Since for the available genes we do not have any measurement and thus no criteria to select interesting genes,
-we randomly select $10\%$ genes from the gene universe and consider them as interesting genes.
-
-<<>>=
-myInterestedGenes <- sample(geneNames, length(geneNames) / 10)
-geneList <- factor(as.integer(geneNames %in% myInterestedGenes))
-names(geneList) <- geneNames
-str(geneList)
-@ 
-
-The {\tt geneList} object is a named factor that indicates which genes are interesting and which not. It
-should be straightforward to compute such a named vector in a real case situation, where the user has his own
-predefined list of interesting genes.
-
-We now have all the elements to construct a {\tt topGOdata} object. The arguments of the {\tt initialize}
-function used to construct an instance of this object are described bellow.
+We further describe the arguments of the {\tt initialize} function ({\tt new}) used to construct an instance
+of this {\it data container} object.
 
 \begin{description}
 \item[{\tt ontology:}] character string specifying the ontology of interest (BP, MF or CC)
   
 \item[{\tt description:}] character string containing a short description of the study [optional].
   
-\item[{\tt allGenes:}] named object of type numeric of factor. The names attribute contains the genes
+\item[{\tt allGenes:}] named vector of type numeric or factor. The names attribute contains the genes
   identifiers. The genes listed in this object define the gene universe.
   
 \item[{\tt geneSelectionFun:}] function to specify which genes are interesting based on the gene scores. 
@@ -491,12 +525,86 @@ function used to construct an instance of this object are described bellow.
 \item[{\tt ...:}] list of arguments to be passed to the {\tt annotationFun}
 \end{description}
 
-To build the {\tt topGOdata} object, we will use the MF ontology. The mapping is given by the {\tt ensembl2GO}
+
+
+\subsection{Custom annotations}
+\label{subsec:annotations}
+This section describes how custom GO annotations can be used for building a {\tt topGOdata} object.
+
+Annotations need to be provided either as {\it gene-to-GOs} or as {\it GO-to-genes} mappings.
+An example of such mapping can be found in the "topGO/examples" directory. The file
+"geneid2go.map" contains gene-to-GOs mappings.  For each gene identifier are listed the GO terms to
+which this gene is specifically annotated. We use the {\tt readMappings} function to parse this file.
+
+<<>>=
+geneID2GO <- readMappings(file = system.file("examples/geneid2go.map", package = "topGO"))
+str(head(geneID2GO))
+@ 
+
+The object returned by {\tt readMappings} is a named list of character vectors. The list names give the
+genes identifiers. Each element of the list is a character vector and contains the GO identifiers
+annotated to the specific gene. It is sufficient for the mapping to contain only the most specific GO
+annotations. However, {\tt topGO} can also take as an input files in which all or some ancestors of the
+most specific GO annotations are included. This redundancy is not making for a faster running time and
+if possible it should be avoided.
+
+The user can read the annotations from text files or they can build an object such as {\tt geneID2GO}
+directly into R. The text file format required by the {\tt readMappings} function is very simple. It
+consists of one line for each gene with the following syntax:
+
+\begin{verbatim}
+gene_ID<TAB>GO_ID1, GO_ID2, GO_ID3, ....
+\end{verbatim}
+
+Reading GO-to-genes mappings from a file is also possible using the {\tt readMappings} function.
+However, it is the user responsibility to know the direction of the mappings. The user can easily
+transform a mapping from gene-to-GOs to GO-to-genes (or vice-versa) using the function {\tt inverseList}:
+
+<<>>=
+GO2geneID <- inverseList(geneID2GO)
+str(head(GO2geneID))
+@ 
+
+
+\subsection{Predefined list of interesting genes}  
+\label{subsec:sigGenes}
+If the user has some a priori knowledge about a set of interesting genes, he can test the enrichment of
+GO terms with regard to this list of interesting genes. In this scenario, when only a list of interesting
+genes is provided, the user can use only tests statistics that are based on gene counts, like Fisher's exact
+test, Z score and alike.
+
+To demonstrate how custom annotation can be used this section is based on the toy dataset, the {\tt geneID2GO}
+data, from Section~\ref{subsec:annotations}. The gene universe in this case is given by the list names:
+
+<<results = hide>>=
+geneNames <- names(geneID2GO)
+head(geneNames)
+@ 
+
+Since for the available genes we do not have any measurement and thus no criteria to select interesting genes,
+we randomly select $10\%$ genes from the gene universe and consider them as interesting genes.
+
+<<>>=
+myInterestingGenes <- sample(geneNames, length(geneNames) / 10)
+geneList <- factor(as.integer(geneNames %in% myInterestingGenes))
+names(geneList) <- geneNames
+str(geneList)
+@ 
+
+The {\tt geneList} object is a named factor that indicates which genes are interesting and which not. It
+should be straightforward to compute such a named vector in a real case situation, where the user has his own
+predefined list of interesting genes.
+
+We now have all the elements to construct a {\tt topGOdata} object.
+
+
+
+To build the {\tt topGOdata} object, we will use the MF ontology. The mapping is given by the {\tt geneID2GO}
 list which will be used with the {\tt annFUN.gene2GO} function.
 
 <<results = hide>>=
 GOdata <- new("topGOdata", ontology = "MF", allGenes = geneList,
-              annot = annFUN.gene2GO, gene2GO = ensembl2GO)
+              annot = annFUN.gene2GO, gene2GO = geneID2GO)
 @ 
 
 The building of the {\tt GOdata} object can take some time, depending on the number of annotated
@@ -568,7 +676,7 @@ sum(x) ## the number of selected genes
 @ 
 
 With all these steps done, the user can now build the {\tt topGOdata} object. For a short description 
-of the arguments used by the {\tt initialize} function see Section\ref{subsec:sigGenes}
+of the arguments used by the {\tt initialize} function see Section~\ref{subsec:sigGenes}
 
 <<results = hide>>=
 GOdata <- new("topGOdata", 
@@ -601,7 +709,7 @@ All further analysis depends only on the {\tt GOdata} object.
 Before going further with the enrichment analysis we analyse which of the probes available on the array
 can be used in the analysis.
 
-We want to see if the filtering performed in Section~\ref{sec:preprocessing} removes important probes.
+We want to see if the filtering performed in Section~\ref{subsec:preprocessing} removes important probes.
 There are a total of $\Sexpr{nrow(ALL)}$ probes on the $\Sexpr{annotation(ALL)}$ chip. One assumes that only
 the noisy probes, probes with low expression values or small variance across samples are filtered out from
 the analysis. 
@@ -687,8 +795,6 @@ the analysis.
 
 
 
-
-
 \section{Working with the {\tt topGOdata} object}
 
 Once the {\tt topGOdata} object is created the user can use various methods defined for this class to
@@ -759,7 +865,7 @@ ug <- usedGO(GOdata)
 head(ug) 
 @
 
-Next, we select some random GO terms, count the number of annotated genes and obtain their annotation.
+We further select $10$ random GO terms, count the number of annotated genes and obtain their annotation.
 
 <<results = hide>>=
 sel.terms <- sample(usedGO(GOdata), 10)
@@ -793,7 +899,7 @@ termStat(GOdata, sel.terms)
 
 
 
-\section{Running the group test}
+\section{Running the enrichment tests}
 
 In this section we explain how we can run the desired enrichment method once the {\tt topGOdata}
 object is available.
@@ -807,12 +913,19 @@ Three types of enrichment tests can be distinguish if we look at the data used b
   it only requires the presence of a list of interesting genes and nothing more. Tests like 
   Fisher's exact test, Hypegeometric test and binomial test belong to this family. \cite{Draghici2006}
 \item Tests based on gene {\bf scores} or gene {\bf ranks}. It includes 
-  Kolmogorov-Smirnov like tests (also known as GSEA), Gentleman's Category, $t$-test, etc. \cite{}
+  Kolmogorov-Smirnov like tests (also known as GSEA), Gentleman's Category, $t$-test, etc. \cite{Ackermann2009}
 \item Tests based on gene {\bf expression}. Tests like Goeman's globaltest or GlobalAncova separates
-  from the others since they work directly on the expression matrix. \cite{}
+  from the others since they work directly on the expression matrix. \cite{Goeman2007}
 \end{itemize}
 There are also a number of strategies/algorithms to account for the GO topology, see
 Table~\ref{tabletopGO}, each of them having specific requirements.  
+
+\begin{figure}[!b]
+\centering 
+\includegraphics[width=.8\linewidth]{topGO_classes_v3}
+\caption{The test statistics class structure.}
+\label{fig:topGOclasses}
+\end{figure}
 
 For each test type described above and for each algorithm there is S4 class defined in the
 package. The main idea is to have a class (container) which can store, for a specified gene
@@ -831,13 +944,6 @@ There are two possibilities(or interfaces) for applying a test statistic to an o
 offers more flexibility to the experienced {\tt R} user allowing him to implement new test statistics
 or new algorithms. The second interface is more user friendly but at the same time more restrictive
 in the choice of the tests and algorithms used. We will further explain how these two interfaces work.
-
-\begin{figure}[!t]
-\centering 
-\includegraphics[width=.8\linewidth]{topGO_classes_v3}
-\caption{The test statistics class structure.}
-\label{fig:topGOclasses}
-\end{figure}
 
 
 \subsection{Defining and running the test}
@@ -1075,7 +1181,7 @@ Finally, the function can pass extra arguments to the initialisation method for 
 Thus, one can specify different cutoffs for the {\sf elim} method, or arguments for the {\sf weight} method. 
 
 
-\section{Viewing and interpreting the analysis results}
+\section{Interpretation and visualization of results}
 
 This section present the available tools for analysing and interpreting the results of the performed tests.
 Both {\tt getSigGroups} and {\tt runTest} functions return an object of type {\tt topGOresult}, and most of
@@ -1150,7 +1256,7 @@ Please note that we need to type the full names (the exact name) of the function
 objects. The table includes statistics on the GO terms plus the $p$-values returned by the other algorithms/test
 statistics. Table~\ref{tab:GOresults} shows the informations included in the {\tt data.frame}.
 
-\begin{table}[!th]
+\begin{table}[!t]
   \centering\resizebox{.99\linewidth}{!}{%
 <<echo = FALSE, results = tex>>=
 if(require(xtable))
@@ -1166,14 +1272,14 @@ Next we want to analyse the distribution of the genes annotated to a GO term of 
 an enrichment analysis one expects that the genes annotated to a significantly enriched GO term
 have higher scores than the average gene' score of the gene universe. 
 
-One way to check this hypothesis is the compare the distribution of the gene scores annotated to the 
+One way to check this hypothesis is to compare the distribution of the gene scores annotated to the 
 specified GO term with the distribution of the scores of the complementary gene set (all the genes 
 in the gene universe which are not annotated to the GO term). This can be easily achieved using the 
 {\tt showGroupDensity} function. For example, lets look at the distribution of the genes annotated to 
 the most significant GO term w.r.t. the {\sf weight} algorithm. 
 
-\setkeys{Gin}{width=.5\linewidth}
-\begin{figure}[!h]
+\setkeys{Gin}{width=.4\linewidth}
+\begin{figure}[!bh]
   \centering 
 <<fig = TRUE>>=
 goID <- allRes[1, "GO.ID"]
