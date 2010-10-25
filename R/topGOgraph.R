@@ -277,7 +277,7 @@ buildLevels <- function(dag,
   level2nodes <- split(names(sort(nl)), f.index)
 
   return(list(nodes2level = nodes2level,
-              level2nodes = l2e(level2nodes),
+              level2nodes = list2env(level2nodes),
               noOfLevels = level - 1,
               noOfNodes = length(nodes2level)))
 }

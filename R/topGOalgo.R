@@ -900,7 +900,7 @@ setMethod("getSigGroups",
                   names(gw) <- x
                   return(gw)
                 })
-  upNodes.LookUP <- l2e(aux, new.env(hash = T, parent = emptyenv()))
+  upNodes.LookUP <- list2env(aux, new.env(hash = T, parent = emptyenv()))
   downNodes.LookUP <-  new.env(hash = T, parent = emptyenv())
 
   ## we also use a hash table to store the result
