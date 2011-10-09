@@ -557,8 +557,7 @@ setMethod("initialize", "topGOresult",
 
 setMethod("description", "topGOresult", function(object) object@description)
 
-if(!isGeneric("score"))
-  setGeneric("score", function(object, whichGO) standardGeneric("score"))
+setGeneric("score", function(object, whichGO) standardGeneric("score"))
                                
 setMethod("score",
           signature(object = "topGOresult", whichGO = "missing"),
@@ -608,8 +607,7 @@ setMethod("geneData", "topGOresult", function(object) object@geneData)
 setMethod("description<-", "topGOresult",
           function(object, value) {object@description <- value; object})
 
-if(!isGeneric("score<-"))
-  setGeneric("score<-", function(object, value) standardGeneric("score<-"))
+setGeneric("score<-", function(object, value) standardGeneric("score<-"))
                                
 setMethod("score<-", "topGOresult", function(object, value) {object@score <- value; object})
 
@@ -680,8 +678,7 @@ if(!isGeneric("allMembers"))
                                
 setMethod("allMembers", "groupStats", function(object) object@allMembers)
 
-if(!isGeneric("members"))
-  setGeneric("members", function(object) standardGeneric("members"))
+setGeneric("members", function(object) standardGeneric("members"))
                                
 setMethod("members", "groupStats", function(object) object@members)
 
