@@ -549,7 +549,7 @@ setMethod("initialize", "topGOresult",
             .Object@algorithm <- algorithm
             .Object@geneData <- geneData
             
-            .Object
+            .Objectlapp
           })
 
 
@@ -557,32 +557,32 @@ setMethod("initialize", "topGOresult",
 
 setMethod("description", "topGOresult", function(object) object@description)
 
-setGeneric("score", function(object, whichGO) standardGeneric("score"))
+##if(!isGeneric("score"))
+setGeneric("score", function(x, ...) standardGeneric("score"))
                                
-setMethod("score",
-          signature(object = "topGOresult", whichGO = "missing"),
-          function(object) object@score)
+setMethod("score", "topGOresult",
+          function(x, whichGO, ...) {
 
-setMethod("score",
-          signature(object = "topGOresult", whichGO = "character"),
-          function(object, whichGO) {
-            
-            allGO <- names(object@score)
+            if(missing(whichGO))
+              return(x@score)
+
+            if(!is.character(whichGO))
+              stop("whichGO must be a valid GO id!")
+
+            allGO <- names(x@score)
             feasableGO <- intersect(whichGO, allGO) # in this way the order of whichGO is preserved 
 
-            if(length(feasableGO) < 1) {
+            if(length(feasableGO) < 1L) {
               warning("The specified GO terms could not be found in the object... Returning empty vector")
-              return(numeric(0))
+              return(numeric())
             }
-            
-            x <- setdiff(whichGO, allGO)
-            if(length(x) > 0)
+                        
+            if(length(setdiff(whichGO, allGO)) > 0L)
               warning("Not all specified GOs can be found in the object.")
-            x <- setdiff(allGO, whichGO)
-            if(length(x) > 0)
+            if(length(setdiff(allGO, whichGO)) > 0L)
               warning("Not all GOs from the object were retrived.")
             
-            return(object@score[feasableGO])
+            return(x@score[feasableGO])
           })
 
 if(!isGeneric("testName"))
@@ -607,9 +607,14 @@ setMethod("geneData", "topGOresult", function(object) object@geneData)
 setMethod("description<-", "topGOresult",
           function(object, value) {object@description <- value; object})
 
-setGeneric("score<-", function(object, value) standardGeneric("score<-"))
-                               
-setMethod("score<-", "topGOresult", function(object, value) {object@score <- value; object})
+##if(!isGeneric("score<-"))
+setGeneric("score<-", function(x, ..., value) standardGeneric("score<-"))
+
+setMethod("score<-", "topGOresult",
+          function(x, ..., value) {
+            x@score <- value
+            x
+          })
 
 
 if(!isGeneric("testName<-"))
@@ -678,9 +683,12 @@ if(!isGeneric("allMembers"))
                                
 setMethod("allMembers", "groupStats", function(object) object@allMembers)
 
-setGeneric("members", function(object) standardGeneric("members"))
+##if(!isGeneric("members"))
+setGeneric("members", function(x, i) standardGeneric("members"))
                                
-setMethod("members", "groupStats", function(object) object@members)
+setMethod("members",
+          signature(x = "groupStats", i = "missing"),
+          function(x, i) x@members)
 
 if(!isGeneric("testStatistic"))
   setGeneric("testStatistic", function(object) standardGeneric("testStatistic"))
@@ -897,24 +905,21 @@ setMethod("membersScore", "classicScore",
 
 ## methods to assign the score
 ## the value should be a named vector, the names should be allMembers
-if(!isGeneric("score<-"))
-  setGeneric("score<-", function(object, value) standardGeneric("score<-"))
-                               
 setMethod("score<-", "classicScore",
-          function(object, value) {
+          function(x, ..., value) {
             ## some checking
             if(length(names(value)) == 0)
               stop("no names associated with the score")
-            if(!all(names(value) %in% object@allMembers))
+            if(!all(names(value) %in% x@allMembers))
               warning("The new score names do not match with allMembers.")
-            if(!all(object@members %in% names(value)))
+            if(!all(x@members %in% names(value)))
               stop("You need to build a new object!")
             
-            value <- sort(value, object@scoreOrder)
-            object@allMembers <- names(value)
-            object@score <- as.numeric(value)
+            value <- sort(value, x@scoreOrder)
+            x@allMembers <- names(value)
+            x@score <- as.numeric(value)
 
-            return(object)
+            return(x)
           })
           
 ## rank the members of the group according to their score
@@ -1092,12 +1097,13 @@ setMethod("elim<-", "weight01Score",
 
 setMethod("elim", "weight01Score", function(object) object@members[object@elim])
 
-setMethod("members", "weight01Score",
-          function(object) {
-            if(length(object@elim) == 0)
-              return(object@members)
+setMethod("members",
+          signature(x = "weight01Score", i = "missing"),
+          function(x) {
+            if(length(x@elim) == 0)
+              return(x@members)
 
-            return(object@members[-object@elim])
+            return(x@members[-x@elim])
           })
 
 setMethod("allMembers", "weight01Score",
@@ -1189,12 +1195,13 @@ setMethod("elim", "weight01Expr",
           function(object) object@members[object@elim])
 
 ## probably not a good idea ....
-setMethod("members", "weight01Expr",
-          function(object) {
-            if(length(object@elim) == 0)
-              return(object@members)
+setMethod("members",
+          signature(x = "weight01Expr", i = "missing"),
+          function(x) {
+            if(length(x@elim) == 0)
+              return(x@members)
 
-            return(object@members[-object@elim])
+            return(x@members[-x@elim])
           })
 
 setMethod("allMembers", "weight01Expr",

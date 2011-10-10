@@ -20,7 +20,7 @@
 \alias{allMembers,groupStats-method}
 \alias{initialize,groupStats-method}
 \alias{members<-,groupStats-method}
-\alias{members,groupStats-method}
+\alias{members,groupStats,missing-method}
 \alias{Name<-,groupStats-method}
 \alias{Name,groupStats-method}
 \alias{numAllMembers,groupStats-method}

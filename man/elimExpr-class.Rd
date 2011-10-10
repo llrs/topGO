@@ -19,7 +19,7 @@
 \alias{allMembers,weight01Expr-method}
 \alias{elim<-,weight01Expr-method}
 \alias{elim,weight01Expr-method}
-\alias{members,weight01Expr-method}
+\alias{members,weight01Expr,missing-method}
 \alias{numAllMembers,weight01Expr-method}
 \alias{numMembers,weight01Expr-method}
 

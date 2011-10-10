@@ -10,8 +10,7 @@
 \alias{description<-,topGOresult,ANY-method}
 
 \alias{score}
-\alias{score,topGOresult,character-method}
-\alias{score,topGOresult,missing-method}
+\alias{score,topGOresult-method}
 \alias{score<-,topGOresult-method}
 
 \alias{testName}

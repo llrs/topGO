@@ -37,7 +37,7 @@
 \alias{allScore,weight01Score,logical-method}
 \alias{elim<-,weight01Score-method}
 \alias{elim,weight01Score-method}
-\alias{members,weight01Score-method}
+\alias{members,weight01Score,missing-method}
 \alias{membersScore,weight01Score-method}
 \alias{numAllMembers,weight01Score-method}
 \alias{numMembers,weight01Score-method}
