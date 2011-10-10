@@ -549,7 +549,7 @@ setMethod("initialize", "topGOresult",
             .Object@algorithm <- algorithm
             .Object@geneData <- geneData
             
-            .Objectlapp
+            .Object
           })
 
 
