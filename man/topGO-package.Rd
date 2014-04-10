@@ -27,7 +27,7 @@
 \author{
   Adrian Alexa, J\"org Rahnenf\"uhrer
   
-  Maintainer: Adrian Alexa <alexa@mpi-inf.mpg.de>
+  Maintainer: Adrian Alexa
 }
 
 \references{
