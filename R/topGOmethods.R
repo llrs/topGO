@@ -557,9 +557,6 @@ setMethod("initialize", "topGOresult",
 
 setMethod("description", "topGOresult", function(object) object@description)
 
-##if(!isGeneric("score"))
-setGeneric("score", function(x, ...) standardGeneric("score"))
-                               
 setMethod("score", "topGOresult",
           function(x, whichGO, ...) {
 
@@ -606,9 +603,6 @@ setMethod("geneData", "topGOresult", function(object) object@geneData)
 
 setMethod("description<-", "topGOresult",
           function(object, value) {object@description <- value; object})
-
-##if(!isGeneric("score<-"))
-setGeneric("score<-", function(x, ..., value) standardGeneric("score<-"))
 
 setMethod("score<-", "topGOresult",
           function(x, ..., value) {
