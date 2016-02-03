@@ -17,8 +17,6 @@ groupGOTerms <- function(where) {
     where <- .GlobalEnv
   where <- as.environment(where)
 
-  require('GO.db') || stop('package GO.db is required')
-
   sql <- "SELECT go_id FROM go_term WHERE ontology IN"
   for(onto in c("BP", "MF", "CC")) {
     xx <- dbGetQuery(GO_dbconn(), paste(sql, "('", onto, "');", sep = ""))$go_id

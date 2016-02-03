@@ -12,7 +12,7 @@ setMethod("initialize", "topGOdata",
                    ## which Ontology to be used
                    ontology,
                    ## a named numeric or factor, the names are the genes ID
-                   allGenes, 
+                   allGenes,
                    ## function to select the signif. genes
                    geneSelectionFun = NULL,
                    ## description of the class
@@ -27,22 +27,22 @@ setMethod("initialize", "topGOdata",
                    annotationFun,
                    ## additional parameters for the annotationFun
                    ...) {
-            
+
             .Object@description <- description
             .Object@ontology <- ontology
 
             .Object@expressionMatrix <- expressionMatrix  #!
             .Object@phenotype        <- phenotype         #!
-            
+
             ## some checking
             if(is.null(names(allGenes)))
               stop("allGenes must be a named vector")
-            
+
             if(!is.factor(allGenes) && !is.numeric(allGenes))
               stop("allGenes should be a factor or a numeric vector")
 
             .Object@allGenes <- names(allGenes)
-            
+
             if(is.factor(allGenes)) {
               if(length(levels(allGenes)) != 2)
                 stop("allGenes must be a factor with 2 levels")
@@ -53,7 +53,7 @@ setMethod("initialize", "topGOdata",
             }
             else {
               .Object@allScores <- as.numeric(allGenes)
-              
+
               ## function to select which genes are significant
               if(is.null(geneSelectionFun))
                 warning("No function to select the significant genes provided!")
@@ -63,27 +63,24 @@ setMethod("initialize", "topGOdata",
             ## size of the nodes which will be pruned
             .Object@nodeSize = as.integer(max(nodeSize, 1))
 
-            ## loading some required libraries 
-            require('GO.db') || stop('package GO.db is required')
-
             ## this function is returning a list of GO terms from the specified ontology
             ## whith each entry being a vector of genes
             cat("\nBuilding most specific GOs .....")
             mostSpecificGOs <- annotationFun(ontology, .Object@allGenes, ...)
             cat("\t(", length(mostSpecificGOs), "GO terms found. )\n")
-            
+
             ## the the GO graph is build started from the most specific terms
             cat("\nBuild GO DAG topology ..........")
             g <- buildGOgraph.topology(names(mostSpecificGOs), ontology)
             cat("\t(",  numNodes(g), "GO terms and", numEdges(g), "relations. )\n")
-                
-            ## probably is good to store the leves but for the moment we don't 
+
+            ## probably is good to store the leves but for the moment we don't
             .nodeLevel <- buildLevels(g, leafs2root = TRUE)
-            
+
             ## annotate the nodes in the GO graph with genes
             cat("\nAnnotating nodes ...............")
             g <- mapGenes2GOgraph(g, mostSpecificGOs, nodeLevel = .nodeLevel) ## leafs2root
-            
+
             ## select the feasible genes
             gRoot <- getGraphRoot(g)
             feasibleGenes <- ls(nodeData(g, n = gRoot, attr = "genes")[[gRoot]])
@@ -99,7 +96,7 @@ setMethod("initialize", "topGOdata",
             } else {
               .Object@graph <-  g
             }
-                          
+
             .Object
           })
 
@@ -108,12 +105,12 @@ setMethod("initialize", "topGOdata",
 ### temp  accessor methods ###
 if(!isGeneric("expressionMatrix"))
   setGeneric("expressionMatrix", function(object) standardGeneric("expressionMatrix"))
-                               
+
 setMethod("expressionMatrix", "topGOdata", function(object) object@expressionMatrix)
 
 if(!isGeneric("phenotype"))
   setGeneric("phenotype", function(object) standardGeneric("phenotype"))
-                               
+
 setMethod("phenotype", "topGOdata", function(object) object@phenotype)
 ######################################################################
 
@@ -124,27 +121,27 @@ setMethod("phenotype", "topGOdata", function(object) object@phenotype)
 
 if(!isGeneric("description"))
   setGeneric("description", function(object) standardGeneric("description"))
-                               
+
 setMethod("description", "topGOdata", function(object) object@description)
 
 if(!isGeneric("ontology"))
   setGeneric("ontology", function(object) standardGeneric("ontology"))
-                               
+
 setMethod("ontology", "topGOdata", function(object) object@ontology)
 
 if(!isGeneric("allGenes"))
   setGeneric("allGenes", function(object) standardGeneric("allGenes"))
-                               
+
 setMethod("allGenes", "topGOdata", function(object) object@allGenes)
 
 ##if(!isGeneric("allScores"))
 ##  setGeneric("allScores", function(object) standardGeneric("allScores"))
-                               
+
 ##setMethod("allScores", "topGOdata", function(object) object@allScores)
 
 if(!isGeneric("feasible"))
   setGeneric("feasible", function(object) standardGeneric("feasible"))
-                               
+
 setMethod("feasible", "topGOdata", function(object) object@feasible)
 
 if(!isGeneric("graph"))
@@ -164,7 +161,7 @@ setMethod("graph", "topGOdata", function(object) object@graph)
 
 if(!isGeneric("geneSelectionFun"))
   setGeneric("geneSelectionFun", function(object) standardGeneric("geneSelectionFun"))
-                               
+
 setMethod("geneSelectionFun", "topGOdata", function(object) object@geneSelectionFun)
 
 
@@ -172,37 +169,37 @@ setMethod("geneSelectionFun", "topGOdata", function(object) object@geneSelection
 
 if(!isGeneric("description<-"))
   setGeneric("description<-", function(object, value) standardGeneric("description<-"))
-                               
+
 setMethod("description<-", "topGOdata", function(object, value) {object@description <- value; object})
 
 if(!isGeneric("ontology<-"))
   setGeneric("ontology<-", function(object, value) standardGeneric("ontology<-"))
-                               
+
 setMethod("ontology<-", "topGOdata", function(object, value) {object@ontology <- value; object})
 
 ## not a good idea to modify the list of allGenes, see updateGenes()
 #if(!isGeneric("allGenes<-"))
 #  setGeneric("allGenes<-", function(object, value) standardGeneric("allGenes<-"))
-#                               
+#
 #setMethod("allGenes<-", "topGOdata", function(object, value) {object@allGenes <- value; object})
 
 
 if(!isGeneric("feasible<-"))
   setGeneric("feasible<-", function(object, value) standardGeneric("feasible<-"))
-                               
+
 setMethod("feasible<-", "topGOdata", function(object, value) {object@feasible <- value; object})
 
 
 if(!isGeneric("geneSelectionFun<-"))
   setGeneric("geneSelectionFun<-", function(object, value) standardGeneric("geneSelectionFun<-"))
-                               
+
 setMethod("geneSelectionFun<-", "topGOdata",
           function(object, value) {object@geneSelectionFun <- value; object})
 
 
 if(!isGeneric("graph<-"))
   setGeneric("graph<-", function(object, value) standardGeneric("graph<-"))
-                               
+
 setMethod("graph<-", "topGOdata", function(object, value) {object@graph <- value; object})
 
 
@@ -219,15 +216,15 @@ if(!isGeneric("updateGenes"))
 setMethod("updateGenes",
           signature(object = "topGOdata", geneList = "numeric", geneSelFun = "function"),
           function(object, geneList, geneSelFun) {
-            
+
             fGenes <- genes(object)
-            
+
             if(is.null(names(geneList)))
               stop("geneList must be a named vector")
-            
+
             if(!all(fGenes %in% names(geneList)))
               stop("Please provide a feasible geneList")
-               
+
             object@allGenes <- names(geneList)
 
             object@allScores <- as.numeric(geneList)
@@ -235,9 +232,9 @@ setMethod("updateGenes",
 
             ## set up the feasible genes index vector
             object@feasible <- object@allGenes %in% fGenes
-            
+
             ## TODO ........
-            ## we need to update the graph 
+            ## we need to update the graph
             ## object@graph <- updateGraph(object@graph, object@feasible)
 
             object
@@ -249,15 +246,15 @@ setMethod("updateGenes",
           function(object, geneList) {
 
             fGenes <- genes(object)
-            
+
             if(is.null(names(geneList)))
               stop("geneList must be a named vector")
-            
+
             if(!all(genes(object) %in% names(geneList)))
               stop("Please provide a feasible geneList")
-                        
+
             object@allGenes <- names(geneList)
-            
+
             if(length(levels(geneList)) != 2)
               stop("geneList must be a factor with 2 levels")
             object@allScores <- factor(as.character(geneList))
@@ -267,9 +264,9 @@ setMethod("updateGenes",
 
             ## set up the feasible genes index vector
             object@feasible <- object@allGenes %in% fGenes
-            
+
             ## TODO ........
-            ## we need to update the graph 
+            ## we need to update the graph
             ## object@graph <- updateGraph(object@graph, object@feasible)
 
             object
@@ -293,7 +290,7 @@ if(!isGeneric("numGenes"))
 setMethod("numGenes", "topGOdata", function(object) sum(object@feasible))
 
 
-## 
+##
 if(!isGeneric("geneScore"))
   setGeneric("geneScore", function(object, whichGenes, ...) standardGeneric("geneScore"))
 
@@ -304,7 +301,7 @@ setMethod("geneScore",
               retList <- (as.numeric(levels(object@allScores))[object@allScores])[object@feasible]
             else
               retList <- as.numeric(object@allScores)[object@feasible]
-            
+
             if(use.names)
               names(retList) <- genes(object)
 
@@ -319,13 +316,13 @@ setMethod("geneScore",
               retList <- (as.numeric(levels(object@allScores))[object@allScores])[index]
             else
               retList <- as.numeric(object@allScores)[index]
-            
+
             names(retList) <- object@allGenes[index]
             retList <- retList[whichGenes[whichGenes %in% genes(object)]]
-            
-            if(!use.names) 
+
+            if(!use.names)
               names(retList) <- NULL
-            
+
             return(retList)
           })
 
@@ -335,10 +332,10 @@ if(!isGeneric("sigGenes"))
 
 setMethod("sigGenes", "topGOdata",
           function(object) {
-            
+
             ##if(is.null(object@geneSelectionFun))
             ##  return(NULL)
-              
+
             ## select the significant genes and the feasible ones
             sGenesIndex <- object@geneSelectionFun(object@allScores) & object@feasible
             return(object@allGenes[sGenesIndex])
@@ -364,13 +361,13 @@ setMethod("usedGO", "topGOdata", function(object) nodes(graph(object)))
 if(!isGeneric("attrInTerm"))
   setGeneric("attrInTerm", function(object, attr, whichGO) standardGeneric("attrInTerm"))
 
-setMethod("attrInTerm", 
+setMethod("attrInTerm",
           signature(object = "topGOdata", attr = "character", whichGO = "character"),
           function(object, attr, whichGO) {
             return(.getFromNode(graph(object), attr, whichGO))
           })
 
-setMethod("attrInTerm", 
+setMethod("attrInTerm",
           signature(object = "topGOdata", attr = "character", whichGO = "missing"),
           function(object, attr, whichGO) {
             return(.getFromNode(graph(object), attr, nodes(graph(object))))
@@ -378,18 +375,18 @@ setMethod("attrInTerm",
 
 ## function that return for each GO term specified in the whichGO parameter the vector
 ## of annotated genes. If the whichGO is missing than the vector of annotated genes is
-## returned for each GO term 
+## returned for each GO term
 if(!isGeneric("genesInTerm"))
   setGeneric("genesInTerm", function(object, whichGO) standardGeneric("genesInTerm"))
 
-setMethod("genesInTerm", 
+setMethod("genesInTerm",
           signature(object = "topGOdata", whichGO = "character"),
           function(object, whichGO) {
             return(.genesInNode(graph(object), whichGO))
           })
 
 
-setMethod("genesInTerm", 
+setMethod("genesInTerm",
           signature(object = "topGOdata", whichGO = "missing"),
           function(object) {
             return(.genesInNode(graph(object), nodes(graph(object))))
@@ -399,7 +396,7 @@ setMethod("genesInTerm",
 if(!isGeneric("scoresInTerm"))
   setGeneric("scoresInTerm", function(object, whichGO, ...) standardGeneric("scoresInTerm"))
 
-setMethod("scoresInTerm", 
+setMethod("scoresInTerm",
           signature(object = "topGOdata", whichGO = "character"),
           function(object, whichGO, use.names = FALSE) {
             l <- lapply(.genesInNode(graph(object), whichGO),
@@ -408,7 +405,7 @@ setMethod("scoresInTerm",
           })
 
 
-setMethod("scoresInTerm", 
+setMethod("scoresInTerm",
           signature(object = "topGOdata", whichGO = "missing"),
           function(object, use.names = FALSE) {
             return(scoreInNode(object, nodes(graph(object)), use.names = use.names))
@@ -419,47 +416,47 @@ setMethod("scoresInTerm",
 if(!isGeneric("countGenesInTerm"))
   setGeneric("countGenesInTerm", function(object, whichGO) standardGeneric("countGenesInTerm"))
 
-setMethod("countGenesInTerm", 
+setMethod("countGenesInTerm",
           signature(object = "topGOdata", whichGO = "character"),
           function(object, whichGO) {
             return(.countsInNode(graph(object), whichGO))
           })
 
-setMethod("countGenesInTerm", 
+setMethod("countGenesInTerm",
           signature(object = "topGOdata", whichGO = "missing"),
           function(object) {
             return(.countsInNode(graph(object), nodes(graph(object))))
           })
-            
+
 ## function that return for each GO term specified in the whichGO parameter
 ## a dataframe withe the following informations:
-##   annotated - the number of annotated genes 
+##   annotated - the number of annotated genes
 ##   significant  - the number of annotated significant genes
 ##   expected - how many genes are expected in a random case
 if(!isGeneric("termStat"))
   setGeneric("termStat", function(object, whichGO) standardGeneric("termStat"))
 
-setMethod("termStat", 
+setMethod("termStat",
           signature(object = "topGOdata", whichGO = "character"),
           function(object, whichGO) {
-            
+
             x <- .genesInNode(graph(object), whichGO)
-            
+
             anno <- sapply(x, length)
-            
+
             sGenes <- sigGenes(object)
             sig <- sapply(x, function(e) length(intersect(e, sGenes)))
 
             expect <- numSigGenes(object) / length(genes(object))
             expect <- round(anno * expect, 2)
-            
+
             return(data.frame(Annotated = anno,
                               Significant = sig,
                               Expected = expect,
                               row.names = names(x)))
           })
 
-setMethod("termStat", 
+setMethod("termStat",
           signature(object = "topGOdata", whichGO = "missing"),
           function(object) termStat(object, nodes(graph(object))))
 
@@ -469,7 +466,7 @@ setMethod("termStat",
 if(!isGeneric("updateTerm<-"))
   setGeneric("updateTerm<-", function(object, attr, value)  standardGeneric("updateTerm<-"))
 
-setMethod("updateTerm<-", 
+setMethod("updateTerm<-",
           signature(object = "topGOdata", attr = "character", value = "ANY"),
           function(object, attr, value) {
             ## we need to update the full graph ....
@@ -485,12 +482,12 @@ setMethod("updateTerm<-",
 
 setMethod("print", "topGOdata", function(x, ...) .printTopGOdata(x))
 setMethod("show", "topGOdata", function(object) .printTopGOdata(x = object))
-          
+
 .printTopGOdata <- function(x) {
   cat("\n------------------------- topGOdata object -------------------------\n")
   cat("\n Description:\n")
   cat("   - ", x@description, "\n")
-  
+
   cat("\n Ontology:\n")
   cat("   - ", x@ontology, "\n")
 
@@ -504,7 +501,7 @@ setMethod("show", "topGOdata", function(object) .printTopGOdata(x = object))
     cat("   - score : ", score, " ...\n")
   }
   cat("   -", sum(x@geneSelectionFun(x@allScores)), " significant genes. \n")
-  
+
   ## feasible genes
   cat("\n", numGenes(x) ,"feasible genes (genes that can be used in the analysis):\n")
   sym <- genes(x)[1:min(numGenes(x), 5)]
@@ -521,7 +518,7 @@ setMethod("show", "topGOdata", function(object) .printTopGOdata(x = object))
   cat("   - a graph with", edgemode(gg), "edges\n")
   cat("   - number of nodes =", numNodes(gg), "\n")
   cat("   - number of edges =", numEdges(gg), "\n")
-  
+
   ##cat("\n Signif. genes sellection:\n\n")
   ##print(x@geneSelectionFun)
   cat("\n------------------------- topGOdata object -------------------------\n\n")
@@ -548,7 +545,7 @@ setMethod("initialize", "topGOresult",
             .Object@testName <- testName
             .Object@algorithm <- algorithm
             .Object@geneData <- geneData
-            
+
             .Object
           })
 
@@ -567,36 +564,36 @@ setMethod("score", "topGOresult",
               stop("whichGO must be a valid GO id!")
 
             allGO <- names(x@score)
-            feasableGO <- intersect(whichGO, allGO) # in this way the order of whichGO is preserved 
+            feasableGO <- intersect(whichGO, allGO) # in this way the order of whichGO is preserved
 
             if(length(feasableGO) < 1L) {
               warning("The specified GO terms could not be found in the object... Returning empty vector")
               return(numeric())
             }
-                        
+
             if(length(setdiff(whichGO, allGO)) > 0L)
               warning("Not all specified GOs can be found in the object.")
             if(length(setdiff(allGO, whichGO)) > 0L)
               warning("Not all GOs from the object were retrived.")
-            
+
             return(x@score[feasableGO])
           })
 
 if(!isGeneric("testName"))
   setGeneric("testName", function(object) standardGeneric("testName"))
-                               
+
 setMethod("testName", "topGOresult", function(object) object@testName)
 
 
 if(!isGeneric("algorithm"))
   setGeneric("algorithm", function(object) standardGeneric("algorithm"))
-                               
+
 setMethod("algorithm", "topGOresult", function(object) object@algorithm)
 
 
 if(!isGeneric("geneData"))
   setGeneric("geneData", function(object) standardGeneric("geneData"))
-                               
+
 setMethod("geneData", "topGOresult", function(object) object@geneData)
 
 #################### the replacement functions ####################
@@ -613,19 +610,19 @@ setMethod("score<-", "topGOresult",
 
 if(!isGeneric("testName<-"))
   setGeneric("testName<-", function(object, value) standardGeneric("testName<-"))
-                               
+
 setMethod("testName<-", "topGOresult", function(object, value) {object@testName <- value; object})
 
 
 if(!isGeneric("algorithm<-"))
   setGeneric("algorithm<-", function(object, value) standardGeneric("algorithm<-"))
-                               
+
 setMethod("algorithm<-", "topGOresult", function(object, value) {object@algorithm <- value; object})
 
 
 if(!isGeneric("geneData<-"))
   setGeneric("geneData<-", function(object, value) standardGeneric("geneData<-"))
-                               
+
 setMethod("geneData<-", "topGOresult", function(object, value) {object@geneData <- value; object})
 
 
@@ -634,7 +631,7 @@ setMethod("geneData<-", "topGOresult", function(object, value) {object@geneData 
 
 setMethod("print", "topGOresult", function(x, ...) .printTopGOresult(x))
 setMethod("show", "topGOresult", function(object) .printTopGOresult(x = object))
-          
+
 .printTopGOresult <- function(x) {
   cat("\nDescription:", description(x), "\n")
   cat("'", algorithm(x), "' algorithm with the '", testName(x), "' test\n", sep = "")
@@ -660,7 +657,7 @@ setMethod("initialize", "groupStats",
             .Object@members <- groupMembers
             .Object@testStatistic <- testStatistic
             ##.Object@testStatPar <- testStatPar
-            
+
             .Object
           })
 
@@ -669,46 +666,46 @@ setMethod("initialize", "groupStats",
 
 if(!isGeneric("Name"))
   setGeneric("Name", function(object) standardGeneric("Name"))
-                               
+
 setMethod("Name", "groupStats", function(object) object@name)
 
 if(!isGeneric("allMembers"))
   setGeneric("allMembers", function(object) standardGeneric("allMembers"))
-                               
+
 setMethod("allMembers", "groupStats", function(object) object@allMembers)
 
 ##if(!isGeneric("members"))
 setGeneric("members", function(x, i) standardGeneric("members"))
-                               
+
 setMethod("members",
           signature(x = "groupStats", i = "missing"),
           function(x, i) x@members)
 
 if(!isGeneric("testStatistic"))
   setGeneric("testStatistic", function(object) standardGeneric("testStatistic"))
-                               
+
 setMethod("testStatistic", "groupStats", function(object) object@testStatistic)
 
 if(!isGeneric("testStatPar"))
   setGeneric("testStatPar", function(object) standardGeneric("testStatPar"))
-                               
+
 setMethod("testStatPar", "groupStats", function(object) object@testStatPar)
 
 #################### the replacement functions ####################
 
 if(!isGeneric("Name<-"))
   setGeneric("Name<-", function(object, value) standardGeneric("Name<-"))
-                               
+
 setMethod("Name<-", "groupStats", function(object, value) {object@Name <- value; object})
 
 if(!isGeneric("allMembers<-"))
   setGeneric("allMembers<-", function(object, value) standardGeneric("allMembers<-"))
-                               
+
 setMethod("allMembers<-", "groupStats", function(object, value) {object@allMembers <- value; object})
 
 if(!isGeneric("members<-"))
   setGeneric("members<-", function(object, value) standardGeneric("members<-"))
-                               
+
 setMethod("members<-", "groupStats", function(object, value) {object@members <- value; object})
 
 
@@ -716,19 +713,19 @@ setMethod("members<-", "groupStats", function(object, value) {object@members <- 
 
 if(!isGeneric("numMembers"))
   setGeneric("numMembers", function(object) standardGeneric("numMembers"))
-                               
+
 setMethod("numMembers", "groupStats", function(object) length(object@members))
 
 if(!isGeneric("numAllMembers"))
   setGeneric("numAllMembers", function(object) standardGeneric("numAllMembers"))
-                               
+
 setMethod("numAllMembers", "groupStats", function(object) length(object@allMembers))
 
 
 ## MAIN function -- it should return the "p-value" of the Test Satatistic
 if(!isGeneric("runTest"))
   setGeneric("runTest", function(object, algorithm, statistic, ...) standardGeneric("runTest"))
-                               
+
 setMethod("runTest",
           signature(object = "groupStats", algorithm = "missing", statistic = "missing"),
           function(object) object@testStatistic(object))
@@ -775,38 +772,38 @@ setMethod("initialize", "classicCount",
 
 if(!isGeneric("sigMembers<-"))
   setGeneric("sigMembers<-", function(object, value) standardGeneric("sigMembers<-"))
-                               
+
 setMethod("sigMembers<-", "classicCount",
           function(object, value) {
             object@significant <- which(object@allMembers %in% value)
             object
           })
 
-if(!isGeneric("sigAllMembers")) 
+if(!isGeneric("sigAllMembers"))
   setGeneric("sigAllMembers", function(object) standardGeneric("sigAllMembers"))
-                               
+
 setMethod("sigAllMembers", "classicCount",
           function(object) object@allMembers[object@significant])
 
-if(!isGeneric("numSigAll")) 
+if(!isGeneric("numSigAll"))
   setGeneric("numSigAll", function(object) standardGeneric("numSigAll"))
-                               
+
 setMethod("numSigAll", "classicCount",
           function(object) length(object@significant))
 
-if(!isGeneric("sigMembers")) 
+if(!isGeneric("sigMembers"))
   setGeneric("sigMembers", function(object) standardGeneric("sigMembers"))
-                               
+
 setMethod("sigMembers", "classicCount",
           function(object) intersect(sigAllMembers(object), members(object)))
 
-if(!isGeneric("numSigMembers")) 
+if(!isGeneric("numSigMembers"))
   setGeneric("numSigMembers", function(object) standardGeneric("numSigMembers"))
-                               
-setMethod("numSigMembers", "classicCount",
-          function(object) sum(members(object) %in% sigAllMembers(object)))          
 
-if(!isGeneric("contTable")) 
+setMethod("numSigMembers", "classicCount",
+          function(object) sum(members(object) %in% sigAllMembers(object)))
+
+if(!isGeneric("contTable"))
   setGeneric("contTable", function(object) standardGeneric("contTable"))
 
 setMethod("contTable", "classicCount",
@@ -815,7 +812,7 @@ setMethod("contTable", "classicCount",
             numHits <- numSigMembers(object)
             numSig <- numSigAll(object)
             numM <- numMembers(object)
-            
+
             contMat <- cbind(sig = c(numHits, numSig - numHits),
                              notSig = c(numM - numHits, numAllMembers(object) - numM - numSig + numHits))
             row.names(contMat) <- c("anno", "notAnno")
@@ -841,15 +838,15 @@ setMethod("initialize", "classicScore",
                                  decreasing = TRUE,
                                  increasing = FALSE,
                                  stop("scoreOrder should be increasing or decreasing"))
-            
+
             ## first we order the members according to the score
             index <- order(score, decreasing = scoreOrder)
             if(length(allMembers) != length(score))
               warning("score length don't match.")
-            
+
             .Object <- callNextMethod(.Object, testStatistic, name,
                                       allMembers[index], groupMembers)
-            
+
             .Object@score <- as.numeric(score)[index]
             .Object@scoreOrder <- scoreOrder
             .Object@testStatPar = list(...)
@@ -862,10 +859,10 @@ if(!isGeneric("scoreOrder"))
 
 setMethod("scoreOrder", "classicScore", function(object) object@scoreOrder)
 
-## methods to get the score 
+## methods to get the score
 if(!isGeneric("allScore"))
   setGeneric("allScore", function(object, use.names) standardGeneric("allScore"))
-                               
+
 setMethod("allScore",
           signature(object = "classicScore", use.names = "missing"),
           function(object) object@score)
@@ -885,7 +882,7 @@ setMethod("allScore",
 
 if(!isGeneric("membersScore"))
   setGeneric("membersScore", function(object) standardGeneric("membersScore"))
-                               
+
 setMethod("membersScore", "classicScore",
           function(object) {
             index <- allMembers(object) %in% members(object)
@@ -908,14 +905,14 @@ setMethod("score<-", "classicScore",
               warning("The new score names do not match with allMembers.")
             if(!all(x@members %in% names(value)))
               stop("You need to build a new object!")
-            
+
             value <- sort(value, x@scoreOrder)
             x@allMembers <- names(value)
             x@score <- as.numeric(value)
 
             return(x)
           })
-          
+
 ## rank the members of the group according to their score
 if(!isGeneric("rankMembers"))
   setGeneric("rankMembers", function(object) standardGeneric("rankMembers"))
@@ -947,7 +944,7 @@ setMethod("initialize", "classicExpr",
             }
             else {
               if(class(exprDat) != "matrix")
-                error("exprDat must be of type matrix")              
+                error("exprDat must be of type matrix")
 
               allMembers <- rownames(exprDat)
               e <- new.env(hash = TRUE, parent = emptyenv())
@@ -961,17 +958,17 @@ setMethod("initialize", "classicExpr",
             .Object@pType <- pType
             .Object@eData <- e
             .Object@testStatPar = list(...)
-            
+
             .Object
           })
 
 
 if(!isGeneric("pType<-"))
   setGeneric("pType<-", function(object, value) standardGeneric("pType<-"))
-                               
+
 setMethod("pType<-", "classicExpr", function(object, value) {object@pType <- value; object})
 
-if(!isGeneric("pType")) 
+if(!isGeneric("pType"))
   setGeneric("pType", function(object) standardGeneric("pType"))
 
 ## this is for the simple case in which the pType is a vector!
@@ -980,15 +977,15 @@ setMethod("pType", "classicExpr", function(object) object@pType)
 setMethod("allMembers<-", "classicExpr",
            function(object, value) {warning("Assignmanet not allowed"); object})
 
-if(!isGeneric("emptyExpr")) 
+if(!isGeneric("emptyExpr"))
   setGeneric("emptyExpr", function(object) standardGeneric("emptyExpr"))
 
 setMethod("emptyExpr", "classicExpr",
           function(object) return(environmentName(object@eData) == "R_EmptyEnv"))
 
-if(!isGeneric("membersExpr")) 
+if(!isGeneric("membersExpr"))
   setGeneric("membersExpr", function(object) standardGeneric("membersExpr"))
-                               
+
 setMethod("membersExpr", "classicExpr", function(object)
           get("expresMatrix", envir = object@eData)[object@allMembers %in% members(object), , drop = FALSE])
 
@@ -1016,22 +1013,22 @@ setMethod("initialize", "weight01Count",
 
             .Object@elim <- which(.Object@members %in% elim)
             .Object@testStatPar = list(...)
-            
+
             .Object
           })
 
 if(!isGeneric("elim<-"))
   setGeneric("elim<-", function(object, value) standardGeneric("elim<-"))
-                               
+
 setMethod("elim<-", "weight01Count",
           function(object, value) {
             object@elim <- which(object@members %in% value)
             object
           })
 
-if(!isGeneric("elim")) 
+if(!isGeneric("elim"))
   setGeneric("elim", function(object) standardGeneric("elim"))
-                               
+
 setMethod("elim", "weight01Count",
           function(object) object@members[object@elim])
 
@@ -1046,7 +1043,7 @@ setMethod("numAllMembers", "weight01Count",
 
 setMethod("sigAllMembers", "weight01Count",
           function(object) setdiff(object@allMembers[object@significant], elim(object)))
-          
+
 setMethod("numSigAll", "weight01Count",
           function(object) length(sigAllMembers(object)))
 
@@ -1123,10 +1120,10 @@ setMethod("allScore",
           function(object, use.names = FALSE) {
             ret.val <- object@score
             index <- !(object@allMembers %in% elim(object))
-            
+
             if(use.names)
               names(ret.val) <- object@allMembers
-            
+
             return(ret.val[index])
           })
 
@@ -1175,16 +1172,16 @@ setMethod("initialize", "weight01Expr",
 
 if(!isGeneric("elim<-"))
   setGeneric("elim<-", function(object, value) standardGeneric("elim<-"))
-                               
+
 setMethod("elim<-", "weight01Expr",
           function(object, value) {
             object@elim <- which(object@members %in% value)
             object
           })
 
-if(!isGeneric("elim")) 
+if(!isGeneric("elim"))
   setGeneric("elim", function(object) standardGeneric("elim"))
-                               
+
 setMethod("elim", "weight01Expr",
           function(object) object@members[object@elim])
 
@@ -1239,14 +1236,14 @@ setMethod("initialize", "elimCount",
 
 if(!isGeneric("cutOff<-"))
   setGeneric("cutOff<-", function(object, value) standardGeneric("cutOff<-"))
-                               
+
 setMethod("cutOff<-", "elimCount",
           function(object, value)  {object@cutOff <- value; object})
 
 
-if(!isGeneric("cutOff")) 
+if(!isGeneric("cutOff"))
   setGeneric("cutOff", function(object) standardGeneric("cutOff"))
-                               
+
 setMethod("cutOff", "elimCount", function(object) object@cutOff)
 
 
@@ -1336,11 +1333,11 @@ setMethod("initialize", "weightCount",
 
             if(length(weights) == 0)
               .Object@weights <- numeric()
-            else 
+            else
               if(is.null(names(weights)) &&
                  length(intersect(names(weights), .Object@members)) != length(.Object@members))
                 stop("The weight vector must be a named vector.")
-            
+
             .Object@weights <- as.numeric(weights[.Object@members]) ## to remove the names
 
             ## probably the easiest way to store which sigRatio function is used
@@ -1350,19 +1347,19 @@ setMethod("initialize", "weightCount",
                                        "01" = .sigRatio.01,
                                        stop("Please give a valid sigRation name"))
 
-            if(penalise == "more") 
+            if(penalise == "more")
               ## need to think about this more
               .Object@penalise <- function(a, b) return(1 / (abs(log(a * b) / 2) + 1))
             else
               .Object@penalise <- function(a, b) return(1)
-          
+
             .Object@roundFun <- floor
             .Object@testStatPar = list(...)
 
             .Object
           })
 
-if(!isGeneric("penalise")) 
+if(!isGeneric("penalise"))
   setGeneric("penalise", function(object, a, b) standardGeneric("penalise"))
 
 setMethod("penalise",
@@ -1380,15 +1377,15 @@ setMethod("updateGroup",
 
               object@weights <- as.numeric(weights[members])
             }
-            
+
             return(object)
           })
 
-if(!isGeneric("Weights")) 
+if(!isGeneric("Weights"))
   setGeneric("Weights", function(object, use.names) standardGeneric("Weights"))
 
 setMethod("Weights",
-          signature(object = "weightCount", use.names = "missing"), 
+          signature(object = "weightCount", use.names = "missing"),
           function(object) object@weights)
 
 setMethod("Weights",
@@ -1399,14 +1396,14 @@ setMethod("Weights",
               names(ret.val) <- members(object)
               return(ret.val)
             }
-            
+
             object@weights
           })
 
 
 if(!isGeneric("Weights<-"))
   setGeneric("Weights<-", function(object, value) standardGeneric("Weights<-"))
-                               
+
 setMethod("Weights<-", "weightCount",
           function(object, value) {
             object@weights <- as.numeric(value[object@members])
@@ -1414,14 +1411,14 @@ setMethod("Weights<-", "weightCount",
           })
 
 
-#if(!isGeneric("sigRatio")) 
+#if(!isGeneric("sigRatio"))
 #  setGeneric("sigRatio", function(object) standardGeneric("sigRatio"))
-#                               
+#
 #setMethod("sigRatio", "weightCount", function(object) object@sigRatio)
 
 if(!isGeneric("sigRatio<-"))
   setGeneric("sigRatio<-", function(object, value) standardGeneric("sigRatio<-"))
-                               
+
 setMethod("sigRatio<-", "weightCount",
           function(object, value)  {
             object@sigRatio <- switch(value,
@@ -1433,9 +1430,9 @@ setMethod("sigRatio<-", "weightCount",
           })
 
 
-if(!isGeneric("getSigRatio")) 
+if(!isGeneric("getSigRatio"))
   setGeneric("getSigRatio", function(object, a, b) standardGeneric("getSigRatio"))
-                               
+
 setMethod("getSigRatio", "weightCount",
           function(object, a, b) object@sigRatio(a, b))
 
@@ -1500,12 +1497,12 @@ setMethod("initialize", "parentChild",
               sigMembers <- match(sigMembers, allMembers)
               sigMembers <- sigMembers[!is.na(sigMembers)]
             }
-            
+
             .Object <- callNextMethod(.Object, testStatistic = testStatistic,
                                       name = name, allMembers = allMembers,
                                       groupMembers = groupMembers)
 
-            .Object@joinFun <- match.arg(joinFun) 
+            .Object@joinFun <- match.arg(joinFun)
             .Object@significant <- sigMembers
             .Object@splitIndex <- splitIndex
             .Object@testStatPar = list(...)
@@ -1514,9 +1511,9 @@ setMethod("initialize", "parentChild",
           })
 
 
-if(!isGeneric("joinFun")) 
+if(!isGeneric("joinFun"))
   setGeneric("joinFun", function(object) standardGeneric("joinFun"))
-                               
+
 setMethod("joinFun", "parentChild", function(object) object@joinFun)
 
 
@@ -1539,9 +1536,9 @@ setMethod("allMembers", "parentChild",
           })
 
 
-if(!isGeneric("allParents")) 
+if(!isGeneric("allParents"))
   setGeneric("allParents", function(object) standardGeneric("allParents"))
-                               
+
 setMethod("allParents", "parentChild",
           function(object) {
             ## split the vector into a list
@@ -1551,15 +1548,15 @@ setMethod("allParents", "parentChild",
             return(l)
           })
 
-## needs to be redifined such that it accounts for the joinFun 
+## needs to be redifined such that it accounts for the joinFun
 setMethod("numAllMembers", "parentChild", function(object) length(allMembers(object)))
 
 setMethod("sigAllMembers", "parentChild",
           function(object) intersect(object@allMembers[object@significant], allMembers(object)))
-          
+
 setMethod("numSigAll", "parentChild",
           function(object) length(sigAllMembers(object)))
-          
+
 
 setMethod("sigMembers<-", "parentChild",
           function(object, value) {
@@ -1574,15 +1571,15 @@ setMethod("allMembers<-", "parentChild",
 setMethod("updateGroup",
           signature(object = "parentChild", name = "missing", members = "character"),
           function(object, members, parents, sigMembers) {
-            
+
             object@splitIndex <- sapply(parents, length)
             object@allMembers <- unlist(parents, use.names = FALSE)
-            
+
             sigMembers <- match(sigMembers, object@allMembers)
             object@significant <- sigMembers[!is.na(sigMembers)]
 
             object@members <- members
-            
+
             return(object)
           })
 
@@ -1605,11 +1602,11 @@ setMethod("initialize", "pC",
 
             joinFun <- match.arg(joinFun)
             name <- paste(name, paste("joinFun = ", joinFun, sep = ""), sep = " : ")
-            
+
             joinFun <- switch(joinFun,
                               "union" = get("union"),
                               "intersect" = get("intersect"))
-            
+
             if(missing(parents)) {
               allMembers <- character()
               sigMembers <- integer()
@@ -1621,7 +1618,7 @@ setMethod("initialize", "pC",
               ## if some elements of sigMembers are not in allMembers
               sigMembers <- which(allMembers %in% sigMembers)
             }
-            
+
             .Object <- callNextMethod(.Object, testStatistic = testStatistic,
                                       name = name, allMembers = allMembers,
                                       groupMembers = groupMembers)
@@ -1643,16 +1640,16 @@ setMethod("allMembers<-", "pC",
 setMethod("updateGroup",
           signature(object = "pC", name = "missing", members = "character"),
           function(object, members, parents, sigMembers) {
-            
+
             ## works for a list with at least one element
             allMembers <- parents[[1]]
             for(s in parents[-1])
               allMembers <- object@joinFun(s, allMembers)
-            
+
             object@significant <- which(allMembers %in% sigMembers)
             object@allMembers <- allMembers
             object@members <- members
-            
+
             return(object)
           })
 
@@ -1663,10 +1660,10 @@ setMethod("updateGroup",
             allMembers <- parents[[1]]
             for(s in parents[-1])
               allMembers <- object@joinFun(s, allMembers)
-            
+
             object@significant <- which(allMembers %in% sigMembers)
             object@allMembers <- allMembers
-            
+
             return(object)
           })
 
@@ -1700,14 +1697,14 @@ setMethod("initialize", "leaCount",
 
 if(!isGeneric("depth<-"))
   setGeneric("depth<-", function(object, value) standardGeneric("depth<-"))
-                               
+
 setMethod("depth<-", "leaCount",
           function(object, value)  {object@depth <- as.integer(value); object})
 
 
-if(!isGeneric("depth")) 
+if(!isGeneric("depth"))
   setGeneric("depth", function(object) standardGeneric("depth"))
-                               
+
 setMethod("depth", "leaCount", function(object) object@depth)
 
 

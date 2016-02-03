@@ -1,4 +1,4 @@
-import(methods, BiocGenerics, Biobase, AnnotationDbi, graph)
+import(methods, BiocGenerics, Biobase, AnnotationDbi, graph, GO.db)
 
 importFrom(SparseM, t)
 
