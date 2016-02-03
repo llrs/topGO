@@ -3,6 +3,7 @@ import(methods, BiocGenerics, Biobase, AnnotationDbi, graph, GO.db)
 importFrom(SparseM, t)
 
 importFrom(lattice, densityplot, xyplot)
+importFrom("matrixStats", "rowMins", "rowMaxs")
 
 importFrom("grDevices", "dev.off", "heat.colors", "pdf", "postscript")
 importFrom("graphics", "legend", "par")

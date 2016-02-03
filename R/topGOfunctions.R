@@ -430,8 +430,8 @@ combineResults <- function(..., method = c("gmean", "mean", "median", "min", "ma
   newRes <- switch(combMethod,
                    mean = rowMeans(resList),
                    median = matrixStats::rowMedians(resList),
-                   min = rowMin(resList),
-                   max = rowMax(resList),
+                   min = rowMins(resList),
+                   max = rowMaxs(resList),
                    gmean = exp(rowMeans(log(resList))))
   names(newRes) <- rownames(resList) # just to make sure ... some of the functions we use might drop the names
   score(retVal) <- newRes
