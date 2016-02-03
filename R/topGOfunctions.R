@@ -429,7 +429,7 @@ combineResults <- function(..., method = c("gmean", "mean", "median", "min", "ma
 
   newRes <- switch(combMethod,
                    mean = rowMeans(resList),
-                   median = rowMedians(resList),
+                   median = matrixStats::rowMedians(resList),
                    min = rowMin(resList),
                    max = rowMax(resList),
                    gmean = exp(rowMeans(log(resList))))
