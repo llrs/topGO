@@ -16,7 +16,7 @@ reverseArch <- function(dirGraph,
     stop('The graph is not directed. Nothing to do')
 
   if(numEdges(dirGraph) == 0) {
-    cat('Nothing to do:\n')
+    message('Nothing to do:')
     return(dirGraph)
   }
      
@@ -101,7 +101,7 @@ buildGOgraph.topology <- function(knownNodes, whichOnto = "BP") {
 
     ## debuging point! should not happen!
     if(length(adjNodes) == 0)
-      cat('\n There are no adj nodes for node: ', node, '\n')
+      message('\n There are no adj nodes for node: ', node)
           
     for(i in 1:length(adjNodes)) {
       x <- as.character(adjNodes[i])

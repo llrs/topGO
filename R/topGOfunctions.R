@@ -25,7 +25,7 @@ groupGOTerms <- function(where) {
     assign(paste("GO", onto, "Term", sep = ""), e, envir = where)
   }
 
-  cat("\ngroupGOTerms: \tGOBPTerm, GOMFTerm, GOCCTerm environments built.\n")
+  message("\ngroupGOTerms: \tGOBPTerm, GOMFTerm, GOCCTerm environments built.")
 }
 
 
@@ -101,7 +101,7 @@ setMethod("printGenes",
 
               ## if there are no genes, there is nothing to print
               if(length(affID) == 0) {
-                cat("\n\t No genes over the cutOff for:", gt, "\n")
+                message("\n\t No genes over the cutOff for: ", gt)
                 next
               }
 

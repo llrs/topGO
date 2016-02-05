@@ -99,10 +99,10 @@ setMethod("getSigGroups",
             not.sigTerms <- rownames(x)[index]
             .sigTerms <- rownames(x)[!index]
 
-            cat("\n\t\t\t -- Classic Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            message("\n\t\t\t -- Classic Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat))
 
             ## check if there is at least one nontrivial GO term !!!
             if(length(.sigTerms) > 0) {
@@ -138,11 +138,11 @@ setMethod("getSigGroups",
             }
             
             GOlist <- genesInTerm(object)
-            cat("\n\t\t\t -- Classic Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-            cat("\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"), "\n")
+            message("\n\t\t\t -- Classic Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat), "\n",
+                    "\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"))
             
             algoRes <- .sigGroups.classic(GOlist, test.stat)
             
@@ -165,10 +165,10 @@ setMethod("getSigGroups",
               stop("In function getSigGroups: no expression data found")
 
             GOlist <- genesInTerm(object)
-            cat("\n\t\t\t -- Classic Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            message("\n\t\t\t -- Classic Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat))
             
             algoRes <- .sigGroups.classic(GOlist, test.stat)
 
@@ -202,11 +202,11 @@ setMethod("getSigGroups",
             not.sigTerms <- rownames(x)[index]
             .sigTerms <- rownames(x)[!index]
 
-            cat("\n\t\t\t -- Elim Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-            cat("\t\t\t cutOff: ", cutOff(test.stat), "\n")
+            message("\n\t\t\t -- Elim Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat), "\n",
+                    "\t\t\t cutOff: ", cutOff(test.stat))
 
             ## check if there is at least one nontrivial GO term !!!
             if(length(.sigTerms) > 0) {
@@ -245,12 +245,12 @@ setMethod("getSigGroups",
             }
 
             GOlist <- usedGO(object)
-            cat("\n\t\t\t -- Elim Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-            cat("\t\t\t cutOff: ", cutOff(test.stat), "\n")
-            cat("\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"), "\n")
+            message("\n\t\t\t -- Elim Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat), "\n",
+                    "\t\t\t cutOff: ", cutOff(test.stat), "\n",
+                    "\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"))
             
             ## apply the algorithm
             algoRes <- .sigGroups.elim(graph(object), test.stat)
@@ -276,11 +276,11 @@ setMethod("getSigGroups",
               stop("No expression data found")
             
             GOlist <- usedGO(object)
-            cat("\n\t\t\t -- Elim Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-            cat("\t\t\t cutOff: ", cutOff(test.stat), "\n")
+            message("\n\t\t\t -- Elim Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat), "\n",
+                    "\t\t\t cutOff: ", cutOff(test.stat))
             
             ## apply the algorithm
             algoRes <- .sigGroups.elim(graph(object), test.stat)
@@ -316,10 +316,10 @@ setMethod("getSigGroups",
             not.sigTerms <- rownames(x)[index]
             .sigTerms <- rownames(x)[!index]
 
-            cat("\n\t\t\t -- Weight01 Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            message("\n\t\t\t -- Weight01 Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat))
 
             ## check if there is at least one nontrivial GO term !!!
             if(length(.sigTerms) > 0) {
@@ -358,11 +358,11 @@ setMethod("getSigGroups",
             }
 
             GOlist <- usedGO(object)
-            cat("\n\t\t\t -- Weight01 Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-            cat("\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"), "\n")
+            message("\n\t\t\t -- Weight01 Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat), "\n",
+                    "\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"))
             
             ## apply the algorithm
             algoRes <- .sigGroups.weight01(graph(object), test.stat)
@@ -386,10 +386,10 @@ setMethod("getSigGroups",
               stop("No expression data found")
             
             GOlist <- usedGO(object)
-            cat("\n\t\t\t -- Weight01 Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            message("\n\t\t\t -- Weight01 Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat))
             
             ## apply the algorithm
             algoRes <- .sigGroups.weight01(graph(object), test.stat)
@@ -422,10 +422,10 @@ setMethod("getSigGroups",
             not.sigTerms <- rownames(x)[index]
             .sigTerms <- rownames(x)[!index]
             
-            cat("\n\t\t\t -- Weight Algorithm -- \n")
-            cat(paste("\n\t\t The algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            message("\n\t\t\t -- Weight Algorithm -- \n",
+                    "\n\t\t The algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat))
             
             ## check if there is at least one nontrivial GO term !!!
             if(length(.sigTerms) > 0) {
@@ -468,10 +468,10 @@ setMethod("getSigGroups",
             not.sigTerms <- rownames(x)[index]
             .sigTerms <- rownames(x)[!index]
 
-            cat("\n\t\t\t -- Parent-Child Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
+            message("\n\t\t\t -- Parent-Child Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat))
 
             ## check if there is at least one nontrivial GO term !!!
             if(length(.sigTerms) > 0) {
@@ -508,11 +508,11 @@ setMethod("getSigGroups",
             not.sigTerms <- rownames(x)[index]
             .sigTerms <- rownames(x)[!index]
 
-            cat("\n\t\t\t -- Parent-Child Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-            cat("\t\t\t join function: ", test.stat@joinFun, "\n")
+            message("\n\t\t\t -- Parent-Child Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat), "\n",
+                    "\t\t\t join function: ", test.stat@joinFun)
 
             ## check if there is at least one nontrivial GO term !!!
             if(length(.sigTerms) > 0) {
@@ -559,11 +559,11 @@ setMethod("getSigGroups",
             not.sigTerms <- rownames(x)[index]
             .sigTerms <- rownames(x)[!index]
             
-            cat("\n\t\t\t -- LEA Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-            cat("\t\t\t neighborhood depth: ", depth(test.stat), "\n")
+            message("\n\t\t\t -- LEA Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(.sigTerms), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat), "\n",
+                    "\t\t\t neighborhood depth: ", depth(test.stat))
 
             ## check if there is at least one nontrivial GO term !!!
             if(length(.sigTerms) > 0) {
@@ -604,12 +604,12 @@ setMethod("getSigGroups",
             }
 
             GOlist <- usedGO(object)
-            cat("\n\t\t\t -- LEA Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-            cat("\t\t\t neighborhood depth: ", depth(test.stat), "\n")
-            cat("\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"), "\n")
+            message("\n\t\t\t -- LEA Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat), "\n",
+                    "\t\t\t neighborhood depth: ", depth(test.stat), "\n",
+                    "\t\t\t score order: ", ifelse(scoreOrder(test.stat), "decreasing", "increasing"))
             
             ## apply the algorithm
             algoRes <- .sigGroups.LEA(graph(object), test.stat)
@@ -637,11 +637,11 @@ setMethod("getSigGroups",
               stop("No expression data found")
             
             GOlist <- usedGO(object)
-            cat("\n\t\t\t -- LEA Algorithm -- \n")
-            cat(paste("\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n", sep =""))
-            cat("\t\t parameters: \n")
-            cat("\t\t\t test statistic: ", Name(test.stat), "\n")
-            cat("\t\t\t neighborhood depth: ", depth(test.stat), "\n")
+            message("\n\t\t\t -- LEA Algorithm -- \n",
+                    "\n\t\t the algorithm is scoring ", length(GOlist), " nontrivial nodes\n",
+                    "\t\t parameters: \n",
+                    "\t\t\t test statistic: ", Name(test.stat), "\n",
+                    "\t\t\t neighborhood depth: ", depth(test.stat))
             
             ## apply the algorithm
             algoRes <- .sigGroups.LEA(graph(object), test.stat)
@@ -688,7 +688,7 @@ setMethod("getSigGroups",
   
   ##adjs.cutOff <- cutOff(test.stat) / numNodes(goDAG)
   adjs.cutOff <- cutOff(test.stat)
-  #cat(paste("\n\t\t Parameters:\t cutOff = ", adjs.cutOff, "\n", sep =""))
+  #message("\n\t\t Parameters:\t cutOff = ", adjs.cutOff)
   
   ## we use a lookup table to search for nodes that have were significant
   sigNodes.LookUP <- new.env(hash = T, parent = emptyenv())
@@ -707,8 +707,8 @@ setMethod("getSigGroups",
     currAnno <- .genesInNode(goDAG, currNodes.names)
 
     .num.elimGenes <- length(unique(unlist(as.list(elimGenes.LookUP))))
-    cat(paste("\n\t Level ", i, ":\t", length(currNodes.names),
-              " nodes to be scored\t(", .num.elimGenes, " eliminated genes)\n", sep =""))
+    message("\n\t Level ", i, ":\t", length(currNodes.names),
+            " nodes to be scored\t(", .num.elimGenes, " eliminated genes)")
     
     for(termID in currNodes.names) {
       ## just in case the test.stat is modified by some methods
@@ -917,7 +917,7 @@ setMethod("getSigGroups",
     currNodes.names <- get(as.character(i), envir = levelsLookUp, mode = 'character')
 
     ## some messages
-    cat(paste("\n\t Level ", i, ":\t", length(currNodes.names), " nodes to be scored.\n", sep =""))
+    message("\n\t Level ", i, ":\t", length(currNodes.names), " nodes to be scored.")
 
     for(termID in currNodes.names) {
       ## take the IDs of the gene in the current node
@@ -1059,8 +1059,8 @@ setMethod("getSigGroups",
 
     ## some messages
     .num.elimGenes <- length(unique(unlist(as.list(upNodes.LookUP))))
-    cat(paste("\n\t Level ", i, ":\t", length(currNodes.names),
-              " nodes to be scored\t(", .num.elimGenes, " eliminated genes)\n", sep =""))
+    message("\n\t Level ", i, ":\t", length(currNodes.names),
+            " nodes to be scored\t(", .num.elimGenes, " eliminated genes)")
     
     for(termID in currNodes.names) {
       ## take the IDs of the gene in the current node
@@ -1102,8 +1102,8 @@ setMethod("getSigGroups",
     parents.currNodes <- adj(goDAG, currNodes.names)
     currAnno <- .genesInNode(goDAG, currNodes.names)
 
-    cat(paste("\n\t Level ", i, ":\t", length(currNodes.names),
-              " nodes to be scored.\n", sep =""))
+    message("\n\t Level ", i, ":\t", length(currNodes.names),
+            " nodes to be scored.")
     
     for(termID in currNodes.names) {
       ## just in case the test.stat is modified by some methods
@@ -1135,7 +1135,7 @@ setMethod("getSigGroups",
   group.test <- test.stat
   
   ## get the classic significance
-  cat("\n\t Computing classical p-values ...\n")
+  message("\n\t Computing classical p-values ...")
   class(test.stat) <- sub(LEA.class.pref, "classic", class(test.stat))
   classicPval <- sapply(allAnno,
                         function(term) {
@@ -1158,7 +1158,7 @@ setMethod("getSigGroups",
   chList <- adj(goDAG, usedNodes)
   usedNodes <- usedNodes[sapply(chList, length) != 0]
   
-  cat("\t Computing local p-values ...\n")
+  message("\t Computing local p-values ...")
   for(cNode in usedNodes) {
 
     ## get the descendents of degree k of the current node 
@@ -1200,7 +1200,7 @@ setMethod("getSigGroups",
     ##newPval[cNode] <- runTest(test.stat)
   }
 
-  cat("\t\t", bestCounter, "local optimal nodes found\n\t\t", sum(classicPval != newPval), "corrected p-values \n")
+  message("\t\t", bestCounter, " local optimal nodes found\n\t\t", sum(classicPval != newPval), " corrected p-values")
 
   return(newPval)
 }

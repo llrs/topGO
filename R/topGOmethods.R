@@ -65,26 +65,26 @@ setMethod("initialize", "topGOdata",
 
             ## this function is returning a list of GO terms from the specified ontology
             ## whith each entry being a vector of genes
-            cat("\nBuilding most specific GOs .....")
+            message("\nBuilding most specific GOs .....")
             mostSpecificGOs <- annotationFun(ontology, .Object@allGenes, ...)
-            cat("\t(", length(mostSpecificGOs), "GO terms found. )\n")
+            message("\t( ", length(mostSpecificGOs), " GO terms found. )")
 
             ## the the GO graph is build started from the most specific terms
-            cat("\nBuild GO DAG topology ..........")
+            message("\nBuild GO DAG topology ..........")
             g <- buildGOgraph.topology(names(mostSpecificGOs), ontology)
-            cat("\t(",  numNodes(g), "GO terms and", numEdges(g), "relations. )\n")
+            message("\t( ",  numNodes(g), " GO terms and ", numEdges(g), " relations. )")
 
             ## probably is good to store the leves but for the moment we don't
             .nodeLevel <- buildLevels(g, leafs2root = TRUE)
 
             ## annotate the nodes in the GO graph with genes
-            cat("\nAnnotating nodes ...............")
+            message("\nAnnotating nodes ...............")
             g <- mapGenes2GOgraph(g, mostSpecificGOs, nodeLevel = .nodeLevel) ## leafs2root
 
             ## select the feasible genes
             gRoot <- getGraphRoot(g)
             feasibleGenes <- ls(nodeData(g, n = gRoot, attr = "genes")[[gRoot]])
-            cat("\t(", length(feasibleGenes), "genes annotated to the GO terms. )\n")
+            message("\t( ", length(feasibleGenes), " genes annotated to the GO terms. )")
 
             .Object@feasible <- .Object@allGenes %in% feasibleGenes
 
