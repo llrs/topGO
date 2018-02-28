@@ -177,7 +177,12 @@ setMethod("printGenes",
                          })
 
   names(shortNames) <- names(termsNames)
-  return(shortNames[whichTerms])
+  
+  ## return NAs for the terms that are not found in the DB and make sure the 'names' attribute is as specified
+  shortNames <- shortNames[whichTerms]
+  names(shortNames) <- whichTerms
+
+  return(shortNames)
 }
 
 
